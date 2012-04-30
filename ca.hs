@@ -1,6 +1,7 @@
 import Data.Bits
 import Data.Char
 import Control.Concurrent
+import System.Console.ANSI
 
 data Automaton a = Automaton {
     q_0 :: a,
@@ -11,6 +12,19 @@ windowed :: Int -> [a] -> [[a]]
 windowed size xs@(x:xs') = case take size xs of
     win | length win == size -> win : windowed size xs'
     _ -> []
+
+diffOut :: String -> String -> IO ()
+diffOut x y = loop $ zip (x ++ repeat ' ') y where
+    loop [] = putStrLn ""
+    loop xs = do
+        putStr . map snd $ same
+        setSGR [SetColor Foreground Vivid Red]
+        putStr . map snd $ unsame
+        setSGR [SetColor Foreground Vivid White]
+        loop rest'
+        where
+            (same, rest) = span (uncurry (==)) xs
+            (unsame, rest') = span (uncurry (/=)) rest
 
 step :: Eq a => Automaton a -> [a] -> ([a], Int)
 step Automaton { q_0 = q_0, delta = delta } qs =
@@ -26,14 +40,16 @@ rule n = Automaton {
     } where
         delta q0 q1 q2 = if testBit n (q0*4+q1*2+q2) then 1 else 0
 
-run a tape padding out =
-    do
-        putStrLn . take 70 . pad padding . concatMap out $ tape
+run :: (Eq a, Show a) => Automaton a -> [a] -> Int -> (a -> String) -> IO ()
+run a tape padding out = loop a (printTape padding tape) tape padding out where
+    loop a lastLine tape padding out = do
+        let line = printTape padding tape
+        diffOut lastLine line
         threadDelay 300000
         let (tape',padding') = step a tape
-        run a tape' (padding + padding') out
-    where
-        pad n = drop (-n) . (replicate n ' ' ++)
+        loop a line tape' (padding + padding') out
+    printTape padding = take 70 . pad padding . concatMap out
+    pad n = drop (-n) . (replicate n ' ' ++)
 
 turing = run (rule 110) [1] 60 out where
     out 0 = " "
