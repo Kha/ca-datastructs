@@ -67,29 +67,23 @@ data Direction = L | N | R deriving (Eq)
 data Tape1 =
     Pop
     | Empty
-    | Head
-    | HeadPop
     | Cell (Char, Direction)
     deriving (Eq)
 
 instance Show Tape1 where
     show Pop = "p"
     show Empty = " "
-    show Head = "|"
-    show HeadPop = "$"
     show (Cell (c,N)) = [c]
     show (Cell (c,_)) = [toUpper c]
 
 tape1 cmds = run (Automaton {
     q_0 = Empty,
     delta = delta
-    }) (map parse $ cmds ++ "|abcdefghijklmn") 20 show
+    }) (map parse $ cmds ++ "abcdefghijklmn") 20 show
     where
         delta Pop Empty _ = Pop
         delta q0 Pop _ = q0
-        delta Pop Head _ = HeadPop
-        delta _ HeadPop _ = Head
-        delta HeadPop q1 (Cell (c,_)) = Cell(c,R)
+        delta Pop q1 (Cell (c,_)) = Cell(c,R)
         delta (Cell (_,R)) q1 (Cell (c,_)) = Cell(c,R)
         delta (Cell (_,R)) q1 Empty = Empty
         delta _ (Cell (c,_)) _ = Cell(c,N)
@@ -97,5 +91,4 @@ tape1 cmds = run (Automaton {
 
         parse 'p' = Pop
         parse ' ' = Empty
-        parse '|' = Head
         parse c   = Cell (c,N)
