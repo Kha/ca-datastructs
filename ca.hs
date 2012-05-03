@@ -63,32 +63,37 @@ turing = run (rule 110) [1] 60 out where
 -- tape1
 
 
-data Direction = L | N | R deriving (Eq)
+data T1Cmd = Nop | Pop | Push Char deriving (Eq)
 data Tape1 =
-    Pop
+    Cmd T1Cmd
     | Empty
-    | Cell (Char, Direction)
+    | Cell (Char, T1Cmd)
     deriving (Eq)
 
 instance Show Tape1 where
-    show Pop = "p"
+    show (Cmd Nop) = " "
+    show (Cmd Pop) = "p"
+    show (Cmd (Push c)) = [c]
     show Empty = " "
-    show (Cell (c,N)) = [c]
-    show (Cell (c,_)) = [toUpper c]
+    show (Cell (c, Nop)) = [c]
+    show (Cell (c, _)) = [toUpper c]
 
 tape1 cmds = run (Automaton {
     q_0 = Empty,
     delta = delta
-    }) (map parse $ cmds ++ "abcdefghijklmn") 20 show
+    }) (map (Cmd . parse) cmds ++ map (\c -> Cell (c, Nop)) "abcdefghijklmn") 20 show
     where
-        delta Pop Empty _ = Pop
-        delta q0 Pop _ = q0
-        delta Pop q1 (Cell (c,_)) = Cell(c,R)
-        delta (Cell (_,R)) q1 (Cell (c,_)) = Cell(c,R)
-        delta (Cell (_,R)) q1 Empty = Empty
-        delta _ (Cell (c,_)) _ = Cell(c,N)
+        delta cmd@(Cmd _) (Cmd _) _ = cmd
+        delta Empty (Cmd _) _ = Empty
+        delta (Cmd Pop) (Cell _) (Cell (c,_)) = Cell (c, Pop)
+        delta (Cell (_, Pop)) (Cell _) (Cell (c,_)) = Cell (c, Pop)
+        delta (Cell (_, Pop)) (Cell _) Empty = Empty
+        delta (Cmd (Push c')) (Cell (c,_)) _ = Cell (c', Push c)
+        delta (Cell (_, Push c')) (Cell (c,_)) _ = Cell (c', Push c)
+        delta (Cell (_, Push c')) Empty _ = Cell (c', Nop)
+        delta _ (Cell (c,_)) _ = Cell (c, Nop)
         delta _ q1 _ = q1
 
+        parse ' ' = Nop
         parse 'p' = Pop
-        parse ' ' = Empty
-        parse c   = Cell (c,N)
+        parse c   = Push c
