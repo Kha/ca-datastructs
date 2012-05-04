@@ -2,6 +2,8 @@
 --{-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE TupleSections #-}
 
+module CA where
+
 import Data.Bits
 import Data.Char
 import Data.List
@@ -86,48 +88,17 @@ rule n = Automaton {
 turing = run (rule 110) [1] 60
 
 
--- tape1
+data StackCmd = Nop | Pop | Push Char deriving (Eq)
 
+parseCmd :: Char -> StackCmd
+parseCmd ' ' = Nop
+parseCmd 'p' = Pop
+parseCmd c   = Push c
 
-data T1Cmd = Nop | Pop | Push Char deriving (Eq)
-data Tape1 =
-    Cmd T1Cmd
-    | Empty
-    | Cell (Char, T1Cmd)
-    deriving (Eq)
-
-instance Show Tape1 where
-    show (Cmd Nop) = " "
-    show (Cmd Pop) = "p"
-    show (Cmd (Push c)) = [c]
-    show Empty = " "
-    show (Cell (c, Nop)) = [c]
-    show (Cell (c, _)) = [toUpper c]
-
-instance MultiShow Tape1 where multiShow x = [show x]
-
-tape1 cmds = run (Automaton {
-    q_0 = Empty,
-    delta = delta
-    }) (map (Cmd . parse) cmds ++ map (\c -> Cell (c, Nop)) "abcdefghijklmn") 20
-    where
-        delta cmd@(Cmd _) (Cmd _) _ = cmd
-        delta Empty (Cmd _) _ = Empty
-        delta (Cmd Pop) (Cell _) (Cell (c,_)) = Cell (c, Pop)
-        delta (Cell (_, Pop)) (Cell _) (Cell (c,_)) = Cell (c, Pop)
-        delta (Cell (_, Pop)) (Cell _) Empty = Empty
-        delta (Cmd (Push c')) (Cell (c,_)) _ = Cell (c', Push c)
-        delta (Cell (_, Push c')) (Cell (c,_)) _ = Cell (c', Push c)
-        delta (Cell (_, Push c')) Empty _ = Cell (c', Nop)
-        delta _ (Cell (c,_)) _ = Cell (c, Nop)
-        delta _ q1 _ = q1
-
-        parse ' ' = Nop
-        parse 'p' = Pop
-        parse c   = Push c
 
 
 -- reverse
+
 
 instance MultiShow (Maybe Char) where
     multiShow (Just c) = [[c]]
