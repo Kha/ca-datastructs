@@ -32,7 +32,19 @@ data Automaton a = Automaton {
 }
 
 class MultiShow a where
-    multiShow :: a -> [String]
+    multiShow :: a -> [Char]
+
+padTranspose :: [[Char]] -> [String]
+padTranspose [] = []
+padTranspose xss = transpose . map pad $ xss where
+    pad s = s ++ replicate (lines - length s) ' '
+    lines = foldr1 max . map length $ xss
+
+bracketizeLines :: [String] -> [String]
+bracketizeLines lines = zipWith line [0..] lines where
+    line 0 l = "⎡" ++ l ++ "⎤"
+    line n l | n == length lines - 1 = "⎣" ++ l ++ "⎦"
+    line _ l = "⎢" ++ l ++ "⎥"
 
 windowed :: Int -> [a] -> [[a]]
 windowed size xs@(x:xs') = case take size xs of
@@ -67,7 +79,7 @@ run a tape padding = loop a (printTape padding tape) tape padding where
         threadDelay 300000
         let (tape',padding') = step a tape
         loop a out tape' (padding + padding')
-    printTape padding = map (take 70 . pad padding . concat) . transpose . map multiShow
+    printTape padding = map (take 70 . pad padding) . bracketizeLines . padTranspose . map multiShow
     pad n = drop (-n) . (replicate n ' ' ++)
 
 
@@ -75,8 +87,8 @@ run a tape padding = loop a (printTape padding tape) tape padding where
 
 
 instance MultiShow Int where
-    multiShow 0 = [" "]
-    multiShow x = [show x]
+    multiShow 0 = " "
+    multiShow x = show x
 
 rule :: Int -> Automaton Int
 rule n = Automaton {
@@ -88,6 +100,9 @@ rule n = Automaton {
 turing = run (rule 110) [1] 60
 
 
+-- generic stack
+
+
 data StackCmd = Nop | Pop | Push Char deriving (Eq)
 
 parseCmd :: Char -> StackCmd
@@ -96,13 +111,12 @@ parseCmd 'p' = Pop
 parseCmd c   = Push c
 
 
-
 -- reverse
 
 
 instance MultiShow (Maybe Char) where
-    multiShow (Just c) = [[c]]
-    multiShow Nothing  = [" "]
+    multiShow (Just c) = [c]
+    multiShow Nothing  = " "
 
 instance (MultiShow a, MultiShow b) => MultiShow (a,b) where
     multiShow (x,y) = multiShow x ++ multiShow y
