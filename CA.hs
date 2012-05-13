@@ -64,21 +64,29 @@ diffOut x y = loop $ zip (x ++ repeat ' ') y where
             (same, rest) = span (uncurry (==)) xs
             (unsame, rest') = span (uncurry (/=)) rest
 
-step :: Eq a => Automaton a -> [a] -> ([a], Int)
+step :: Eq a => Automaton a -> [a] -> Maybe ([a], Int)
 step Automaton { q_0 = q_0, delta = delta } qs =
     let qsPadded = [q_0,q_0] ++ qs ++ [q_0,q_0] in
     let qs' = map (\[q0,q1,q2] -> delta q0 q1 q2) . windowed 3 $ qsPadded in
     let pad = (length . takeWhile (== q_0) $ qs') - 1 in
-    (reverse . dropWhile (== q_0) . reverse . dropWhile (== q_0) $ qs', pad)
+    let qs'Unpadded = reverse . dropWhile (== q_0) . reverse . dropWhile (== q_0) $ qs' in
+    if qs'Unpadded == qs && pad == 0
+       then Nothing
+       else Just (qs'Unpadded, pad)
 
 run :: (Eq a, MultiShow a) => Automaton a -> [a] -> Int -> IO ()
-run a tape padding = loop a (printTape padding tape) tape padding where
-    loop a lastOut tape padding = do
+run a tape padding = do
+    n <- loop a (printTape padding tape) tape padding 1
+    putStrLn $ "Halted after " ++ show n ++ " steps"
+    where
+    loop a lastOut tape padding n = do
         let out = printTape padding tape
         sequence_ $ zipWith diffOut lastOut out
         threadDelay 300000
-        let (tape',padding') = step a tape
-        loop a out tape' (padding + padding')
+        case step a tape of
+            Just (tape',padding') -> loop a out tape' (padding + padding') (n+1)
+            Nothing -> return n
+
     printTape padding = map (take 70 . pad padding) . bracketizeLines . padTranspose . map multiShow
     pad n = drop (-n) . (replicate n ' ' ++)
 
