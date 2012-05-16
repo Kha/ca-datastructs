@@ -3,29 +3,28 @@
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE OverlappingInstances #-}
 
-module Tape1 (tape1) where
+module Tape2 (tape2) where
 
 import CA
 import Data.Char
 
-type Tape1 = (Char, StackCmd)
-
-instance Show Tape1 where
-    show (' ',Pop) = "p"
-    show (' ',Push c) = [c]
-    show (c, Nop) = [c]
-    show (c, _) = [toUpper c]
-
-instance MultiShow Tape1 where multiShow x = [show x]
-
-tape1 cmds = run (Automaton {
-    q_0 = (' ',Nop),
+tape2 cmds = runStack (Automaton {
+    q_0 = (' ',' '),
     delta = delta
-    }) (map ((' ',) . parseCmd) cmds ++ map (, Nop) "abcdefghijklmn") 20
+    }) execCmd cmds
     where
-        delta cmd@(' ',_) (' ',_) _ = cmd
-        delta (_,Pop) _ (' ',_) = (' ',Nop)
-        delta (_,Pop) _ (c,_) = (c,Pop)
-        delta (_,Push c') (' ',_) _ = (c',Nop)
-        delta (_,Push c') (c,_) _ = (c',Push c)
-        delta _ (c,_) _ = (c,Nop)
+        execCmd Pop _ _ = (' ',' ')
+        execCmd (Push a) (b1,_) _ = (a,b1)
+        execCmd _ (' ',' ') (c1,_) = (c1,' ') -- pop dest
+        execCmd _ (b1,_) _ = (b1,' ')
+
+        delta0 _ (b1,b2) _ = (b1,' ') -- push source
+
+        delta1 (' ',' ') (b1,_) _ = (' ',' ') -- pop source
+        delta1 _ (' ',' ') (c1,_) = (c1,' ') -- pop dest
+        delta1 _ q1 _ = q1
+
+        delta2 (a1,a2) (b1,_) _ | a2 /= ' ' = (a2,b1) -- push dest
+        delta2 _ q1 _ = q1
+
+        delta = delta2 `composeDelta` delta1 `composeDelta` delta0

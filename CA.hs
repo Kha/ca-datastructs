@@ -40,11 +40,10 @@ concatAutomata Automaton { q_0 = q0_0, delta = delta0 } Automaton { q_0 = q1_0, 
     } where
         d (Left q0) (Left q1) (Left q2) = Left $ delta0 q0 q1 q2
         d (Left q0) (Left q1) (Right q2) = Left $ transLeft q0 q1 q2
-        d (Left q0) (Right q1) (Left _) = Right $ transRight q0 q1 q1_0
-        d (Left q0) (Right q1) (Right q2) = Right $ transRight q0 q1 q2
-        d (Right q0) (Right q1) (Right q2) = Right $ delta1 q0 q1 q2
+        d (Left q0) (Right q1) q2 = Right $ transRight q0 q1 (extr q2)
+        d (Right q0) q1 (Right q2) = Right $ delta1 q0 (extr q1) q2
         d (Right q0) q1 q2 = case delta1 q0 (extr q1) (extr q2) of
-                             q | q == q1_0 -> Left q0_0
+                             q | q == q1_0 && d q1 q2 (Left q0_0) == Left q0_0 -> Left q0_0
                              q -> Right q
 
         extr (Left _) = q1_0
@@ -60,10 +59,12 @@ instance Show a => MultiShow a where
 instance MultiShow Char where
     multiShow c = [c]
 
+pad :: Int -> String -> String
+pad n s = s ++ replicate (n - length s) ' '
+
 padTranspose :: [[Char]] -> [String]
 padTranspose [] = []
-padTranspose xss = transpose . map pad $ xss where
-    pad s = s ++ replicate (lines - length s) ' '
+padTranspose xss = transpose . map (pad lines) $ xss where
     lines = foldr1 max . map length $ xss
 
 bracketizeLines :: [String] -> [String]
