@@ -1,5 +1,6 @@
 {-# LANGUAGE FlexibleInstances #-}
---{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE OverlappingInstances #-}
 {-# LANGUAGE TupleSections #-}
 
 module CA where
@@ -9,6 +10,7 @@ import Data.Char
 import Data.List
 import Control.Concurrent
 import System.Console.ANSI
+import Data.Maybe
 
 type Delta a = a -> a -> a -> a
 
@@ -31,8 +33,32 @@ data Automaton a = Automaton {
     delta :: Delta a
 }
 
+concatAutomata :: (Eq a, Eq b) => Automaton a -> Automaton b -> (a -> a -> b -> a) -> (a -> b -> b -> b) -> Automaton (Either a b)
+concatAutomata Automaton { q_0 = q0_0, delta = delta0 } Automaton { q_0 = q1_0, delta = delta1 } transLeft transRight = Automaton {
+        q_0 = Left q0_0,
+        delta = d
+    } where
+        d (Left q0) (Left q1) (Left q2) = Left $ delta0 q0 q1 q2
+        d (Left q0) (Left q1) (Right q2) = Left $ transLeft q0 q1 q2
+        d (Left q0) (Right q1) (Left _) = Right $ transRight q0 q1 q1_0
+        d (Left q0) (Right q1) (Right q2) = Right $ transRight q0 q1 q2
+        d (Right q0) (Right q1) (Right q2) = Right $ delta1 q0 q1 q2
+        d (Right q0) q1 q2 = case delta1 q0 (extr q1) (extr q2) of
+                             q | q == q1_0 -> Left q0_0
+                             q -> Right q
+
+        extr (Left _) = q1_0
+        extr (Right q) = q
+
+
 class MultiShow a where
     multiShow :: a -> [Char]
+
+instance Show a => MultiShow a where
+    multiShow a = show a
+
+instance MultiShow Char where
+    multiShow c = [c]
 
 padTranspose :: [[Char]] -> [String]
 padTranspose [] = []
@@ -111,12 +137,33 @@ turing = run (rule 110) [1] 60
 -- generic stack
 
 
+instance (MultiShow a, MultiShow b) => MultiShow (Either a b) where
+    multiShow (Left a) = multiShow a
+    multiShow (Right b) = multiShow b
+
+shiftAutomaton q_0 = Automaton {
+        delta = delta,
+        q_0 = q_0
+    } where
+        delta q0 _ _ = q0
+
 data StackCmd = Nop | Pop | Push Char deriving (Eq)
+
+instance MultiShow StackCmd where
+    multiShow Nop = " "
+    multiShow Pop = "<"
+    multiShow (Push c) = [c]
 
 parseCmd :: Char -> StackCmd
 parseCmd ' ' = Nop
-parseCmd 'p' = Pop
+parseCmd '<' = Pop
 parseCmd c   = Push c
+
+runStack :: (Eq b, MultiShow b) => Automaton b -> (StackCmd -> b -> b -> b) -> [Char] -> IO ()
+runStack a execCmd cmds = run cmdA (cmds' ++ [Right (q_0 a)]) 1 where
+    cmdA = concatAutomata (shiftAutomaton Nop) a transLeft execCmd
+    cmds' = map (Left . parseCmd) cmds
+    transLeft q0 _ _ = q0
 
 
 -- reverse
