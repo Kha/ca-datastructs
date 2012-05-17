@@ -49,6 +49,11 @@ concatAutomata Automaton { q_0 = q0_0, delta = delta0 } Automaton { q_0 = q1_0, 
         extr (Left _) = q1_0
         extr (Right q) = q
 
+concatAutomata1 :: (Eq b, Eq a) => Automaton a -> Automaton b -> (b -> a) -> (a -> b) -> Automaton (Either a b)
+concatAutomata1 a0 a1 toLeft toRight = concatAutomata a0 a1 transLeft transRight where
+    transLeft q0 q1 q2 = delta a0 q0 q1 (toLeft q2)
+    transRight q0 q1 q2 = delta a1 (toRight q0) q1 q2
+
 
 class MultiShow a where
     multiShow :: a -> [Char]
@@ -160,12 +165,14 @@ parseCmd ' ' = Nop
 parseCmd '<' = Pop
 parseCmd c   = Push c
 
-runStack :: (Eq b, MultiShow b) => Automaton b -> (StackCmd -> b -> b -> b) -> [Char] -> IO ()
 runStack a execCmd cmds = run cmdA (cmds' ++ [Right (q_0 a)]) 1 where
     cmdA = concatAutomata (shiftAutomaton Nop) a transLeft execCmd
     cmds' = map (Left . parseCmd) cmds
     transLeft q0 _ _ = q0
 
+runStack1 a liftCmd cmds = run cmdA (cmds' ++ [Right (q_0 a)]) 1 where
+    cmdA = concatAutomata1 (shiftAutomaton Nop) a (const Nop) liftCmd
+    cmds' = map (Left . parseCmd) cmds
 
 -- reverse
 

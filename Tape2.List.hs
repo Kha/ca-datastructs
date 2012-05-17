@@ -11,15 +11,14 @@ import Data.Char
 instance MultiShow [Char] where
     multiShow = pad 2
 
-tape2 cmds = runStack (Automaton {
+tape2 cmds = runStack1 (Automaton {
     q_0 = [],
     delta = delta
-    }) execCmd cmds
+    }) liftCmd cmds
     where
-        execCmd Pop _ _ = []
-        execCmd (Push a) bs _ = a:one bs
-        execCmd _ [] cs = one cs -- pop dest
-        execCmd _ bs _ = one bs -- push source
+        liftCmd (Push a) = ['x',a]
+        liftCmd Pop = []
+        liftCmd Nop = ['x']
 
         delta0 _ bs _ = one bs -- push source
 
