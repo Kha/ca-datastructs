@@ -1,7 +1,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverlappingInstances #-}
 
-module Tape1 (tape1) where
+module Tape1 (stack1) where
 
 import CA
 import Data.Char
@@ -13,7 +13,7 @@ instance MultiShow (Char, Dir) where
     multiShow (c,N) = [c]
     multiShow (c,_) = [toUpper c]
 
-tape1 cmds = runStack (Automaton {
+stack1 cmds = runStack (Automaton {
     q_0 = (' ',N),
     delta = delta
     }) execCmd cmds
