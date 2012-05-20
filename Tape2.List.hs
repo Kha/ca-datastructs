@@ -3,7 +3,7 @@
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE OverlappingInstances #-}
 
-module Tape2 (tape2) where
+module Tape2 (stack2) where
 
 import CA
 import Data.Char
