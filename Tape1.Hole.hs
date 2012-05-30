@@ -9,10 +9,10 @@ import Data.Char
 data Dir = L1 | L2 | N | R deriving (Eq,Show)
 
 instance MultiShow (Char,Dir) where
-    multiShow (c,L1) = "<"
-    multiShow (c,L2) = "«"
-    multiShow (c,N) = [c]
-    multiShow (c,R) = [toUpper c]
+    multiShow (c,L1) = ["<"]
+    multiShow (c,L2) = ["«"]
+    multiShow (c,N) = multiShow c
+    multiShow (c,R) = [[toUpper c]]
 
 stack1 cmds = runStack1 (Automaton {
     q_0 = (' ',N),

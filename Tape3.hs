@@ -6,7 +6,7 @@ import CA
 import Data.Maybe
 
 instance MultiShow [Char] where
-    multiShow = pad 3
+    multiShow = map (:[]) . pad 3 ' '
 
 stack3 cmds = runStack1 (Automaton {
     q_0 = [],
@@ -33,7 +33,7 @@ stack3 cmds = runStack1 (Automaton {
         delta = delta3 `composeDelta` delta2 `composeDelta` delta1 `composeDelta` delta0
 
 instance MultiShow ([Char], Maybe Char) where
-    multiShow (cs,d) = pad 2 cs ++ [fromMaybe ' ' d]
+    multiShow (cs,d) = map (:[]) $ pad 2 ' ' cs ++ [fromMaybe ' ' d]
 
 queue3 cmds = runStack1 (Automaton {
     q_0 = ([],Nothing),

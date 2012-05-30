@@ -9,9 +9,9 @@ import CA
 import Data.Char
 
 instance MultiShow [Char] where
-    multiShow = pad 2
+    multiShow = map (:[]) . pad 2 ' '
 
-tape2 cmds = runStack1 (Automaton {
+stack2 cmds = runStack1 (Automaton {
     q_0 = [],
     delta = delta
     }) liftCmd cmds
