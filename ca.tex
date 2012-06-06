@@ -86,7 +86,7 @@ Im Folgenden seien $\Sigma$ und $w$ f체r alle Push-Operationen entsprechend gew�
 \begin{satz}
     Es gibt keinen 2-Band-Automaton mit \emph{pop}-Operation ohne Zeitverlust.
     \begin{beweis}
-        Der Automat sei nach Einf체gen der Elemente $a, b, c$ im stabilen Zustand $t_0$. Betrachte 3 \emph{pop}-Operationen ab $t_0+1$. Um die ersten zwei Operationen zu bedienen, muss $a \in \Gamma_{t_0}(2)$ und $b \in \Gamma_{t_0+1}(2)$ gelten, wegen $t_0$ stabil sogar schon $b \in \Gamma_{t_0}(2)$. Es folgt aus \thref{lem:2tape-halffilled} $c \notin \Gamma_{t_0}(2)$ und wiederum aus Stabilit채tsgr체nden $c \notin \Gamma_{t_0+2}(2)$. Die dritte Operation kann also nicht bedient werden.
+        Betrachte nach Einf체gen der Elemente $a, b, c, d$ 4 \emph{pop}-Operationen ab $t_0+1$. Um die ersten zwei Operationen zu bedienen, muss $a \in \Gamma_{t_0+1}(2)$ und $b \in \Gamma_{t_0+2}(2)$ gelten, wegen der Signalgeschwindigkeit sogar schon $b \in \Gamma_{t_0+1}(2)$. Analog folgt aus $c \in \Gamma_{t_0+3}(2) c \in \Gamma_{t_0+1}(3)$. Es folgt aus \thref{lem:2tape-halffilled} $d \notin \Gamma_{t_0+1}(3)$ und wiederum aus Geschwindigkeitsgr체nden $d \notin \Gamma_{t_0+4}(2)$. Die vierte Operation kann also nicht bedient werden.
     \end{beweis}
 \end{satz}
 
