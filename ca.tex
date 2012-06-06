@@ -3,78 +3,69 @@
 \usepackage[utf8]{inputenc}
 \usepackage[ngerman]{babel}
 
-\usepackage{amsmath,amsthm,amsfonts}
-
-\theoremstyle{plain}% default
-\newtheorem{thm}{Satz}
-\newtheorem{lem}[thm]{Lemma}
-\newtheorem{prop}[thm]{Proposition}
-\newtheorem{cor}[thm]{Korollar}
-
-\theoremstyle{definition}
-\newtheorem{defn}[thm]{Definition}
-\newtheorem{conj}{Conjecture}[section]
-\newtheorem{exmp}{Example}[section]
-
-\theoremstyle{remark}
-\newtheorem*{rem}{Remark}
-\newtheorem*{note}{Note}
-\newtheorem{case}{Case}
+\usepackage{amsmath,amsfonts}
+\usepackage[hyperref,standard,thref]{ntheorem}
+\usepackage{hyperref}
 
 \begin{document}
 
 \newcommand{\ca}{\ensuremath\mathcal{A}}
 \newcommand{\abs}[1]{\lvert#1\rvert}
+\newcommand{\ceil}[1]{\lceil#1\rceil}
+\newcommand{\zrange}[1]{\mathbb{G}_{#1}}
 
-\begin{defn}
-    Wir nennen eine Familie von Zellularautomaten $\ca_\Sigma$ \emph{$n$-Band-Automaten}, falls für die jeweilige Zustandsmenge $Q_\Sigma$ gilt:
+\section{Foo}
+
+\begin{definition}
+    Wir nennen eine Familie von Zellularautomaten $\ca_\Sigma$ \emph{$k$-Band-Automaten}, falls für die jeweilige Zustandsmenge $Q_\Sigma$ gilt:
     \begin{equation}
-        \abs{Q_\Sigma} \in \mathcal{O}(\abs{\Sigma}^n) \label{def:ntape}
+        \abs{Q_\Sigma} \in \mathcal{O}(\abs{\Sigma}^k) \label{def:ntape}
     \end{equation}
-\end{defn}
+\end{definition}
 
-\begin{thm}
+\begin{satz}
     \label{thm:tape-hom}
-    Jeder $n$-Band-Automat ist homomorph zu einem Automat mit der Zustandsmenge $\mathbb{G}_k \times \Sigma^n$, wobei $k \in \mathbb{N}$ die aufgerundete Konstante aus dem $\mathcal{O}$-Kalkül in \eqref{def:ntape} ist.
+    Jeder $k$-Band-Automat ist homomorph zu einem Automat mit der Zustandsmenge $\zrange{\ceil{c}} \times \Sigma^n$, wobei $c$ die Konstante aus dem $\mathcal{O}$-Kalkül in \eqref{def:ntape} ist.
 
-    \begin{proof}
-        Die Aussage folgt wegen $\abs{Q_\Sigma} \leq k \abs{\Sigma}^n$ aus Mächtigkeitsargumenten.
-    \end{proof}
-\end{thm}
+    \begin{beweis}
+        Die Aussage folgt wegen $\abs{Q_\Sigma} \leq c \abs{\Sigma}^k \leq \ceil{c} \abs{\Sigma}^k$ aus Mächtigkeitsargumenten.
+    \end{beweis}
+\end{satz}
 
-\begin{defn}
-    Für eine zelluläre Datenstruktur mit einer Operation \emph{pop} ohne Zeitverlust sei $\Gamma_t(l,r) \subseteq \Sigma$ der \emph{Inhalt} des Intervalls $[l,r)$ zum Zeitpunkt $t$: Es ist die Menge der Buchstaben, die bei wiederholtem Aufruf von \emph{pop} zurückgegeben werden, wenn $[l,r)$ als separater Automat betrachtet wird.
+\begin{definition}
+    Für eine zelluläre Datenstruktur mit einer Operation \emph{pop} ohne Zeitverlust sei $\Gamma_t(n) \subseteq \Sigma^*$ die Buchstabenfolge, die bei $n$-maligem Aufruf von \emph{pop} ab dem Zeitpunkt $t$ zurückgegeben wird.
 
-    Für Automaten mit Zustandsmenge $\Sigma^n$ ist die naheliegende Definition
-    \[ a \in \Gamma_t(l,r) :\Leftrightarrow \exists k \in [l,r): a \in c_t(k) \]
-    Für den Inhalt der ersten $n$ Zellen setzen wir noch $\Gamma_t(n) := \Gamma_t(0,n)$ und $\Gamma_t := \Gamma_t(\infty)$ für den Gesamtinhalt.
-\end{defn}
+    Für Automaten mit Zustandsmenge $\Sigma^k$ ist dies normalerweise die Konkatenation der Zellinhalte.
+\end{definition}
+    Für den Gesamtinhalt setzen wir noch $\Gamma_t := \Gamma_t(\infty)$.
+\begin{korollar}
+    \label{cor:spacesize}
+    Aus \thref{thm:tape-hom} folgt für $k$-Band-Automaten: $\abs{\Gamma_t(n)} \leq kn$
+\end{korollar}
 
-\begin{cor}
-    Aus \ref{thm:tape-hom} folgt für $n$-Band-Automaten: $\abs{\Gamma_t(l,r)} \leq (r-l)n$
-\end{cor}
-
-\begin{cor}
+\begin{korollar}
+    \label{cor:signalpush}
     Aus der Signalgeschwindigkeit in Zellularautomaten folgt: Wird in Schritt $t_0+1$ ein Zeichen $a \in \Sigma$ gepusht, gilt für $t > t_0$:
     \begin{equation}
         a \in \Gamma_t(t-t_0) \label{cor:signal}
     \end{equation}
-\end{cor}
+\end{korollar}
 
-\begin{lem}
+\begin{lemma}
     \label{lem:2tape-halffilled}
-    Für 2-Band-Automaten gilt in jedem stabilen Zustand
-    \[ \abs{\Gamma_{t_0}(n)} \leq n \,\forall n \in \mathbb{N} \]
-    Anschaulich: Das zweite Band ist ungefüllt.
-    \begin{proof}
-        Der Zustand des Automaten sei zum Zeitpunkt $t_0$ stabil. Betrachte die Operationen \emph{push $a_1$, \dots, push $a_n$} ab Zeitpunkt $t_0+1$. Aus \eqref{cor:signal} folgt $\{a_1, \dots, a_n\} =: A \subseteq \Gamma_{t_0+n}(n)$ und, da $t_0$ stabil ist, $\Gamma_{t_0}(n) \subseteq \Gamma_{t_0+n}(n)$. Aus $\abs{A} = n$ und $\abs{\Gamma_{t_0+n}(n)} \leq 2n$ folgt schließlich die Behauptung.
-    \end{proof}
-\end{lem}
+    Für 2-Band-Automaten gilt nach Pushen eines Zeichens zum Zeitpunkt $t_0 + 1$, falls keine weiteren Aktionen folgen:
+    \[ \abs{\Gamma_{t_0+m}(n)} = n \quad\forall\, 1 \leq n \leq \abs{\Gamma_{t_0}},m > n \]
+    Anschaulich: Das zweite Band ist danach ungefüllt.
+    \begin{beweis}
+        Wir nehmen an, es gäbe $m$ und $n$, sodass $\abs{\Gamma_{t_0+m}(n)} \geq n$. Betrachten wir die alternativen Konfigurationen $c'$, die durch Pushen von $w$, $\abs{w}=n$ Zeichen ab dem Zeitpunkt $t_0+(m-n)+1$ entstehen würden, so gilt wegen der Signalgeschwindigkeit $c_{t_0+m}(n') = c'_{t_0+m}(n') \;\forall n' > n$, also ist $\Gamma_{t_0+m}(n)$ Suffix von $\Gamma'_{t_0+m}(n)$, mit \thref{cor:signalpush} insgesamt $\Gamma'_{t_0+m}(n) = w \cdot \Gamma_{t_0+m}(n)$. Es folgt $\abs{\Gamma'_{t_0+m}(n)} = n + \abs{\Gamma_{t_0+m}(n)} > n + n$, ein Widerspruch zu \thref{cor:spacesize}.
+    \end{beweis}
+\end{lemma}
 
-\begin{thm} Es gibt keinen 2-Band-Automaton mit \emph{pop}-Operation ohne Zeitverlust.
-    \begin{proof}
-        Der Automat sei nach Einfügen der Elemente $a, b, c$ im stabilen Zustand $t_0$. Betrachte 3 \emph{pop}-Operationen ab $t_0+1$. Um die ersten zwei Operationen zu bedienen, muss $a \in \Gamma_{t_0}(2)$ und $b \in \Gamma_{t_0+1}(2)$ gelten, wegen $t_0$ stabil sogar schon $b \in \Gamma_{t_0}(2)$. Es folgt aus \ref{lem:2tape-halffilled} $c \notin \Gamma_{t_0}(2)$ und wiederum aus Stabilitätsgründen $c \notin \Gamma_{t_0+2}(2)$. Die dritte Operation kann also nicht bedient werden.
-    \end{proof}
-\end{thm}
+\begin{satz}
+    Es gibt keinen 2-Band-Automaton mit \emph{pop}-Operation ohne Zeitverlust.
+    \begin{beweis}
+        Der Automat sei nach Einfügen der Elemente $a, b, c$ im stabilen Zustand $t_0$. Betrachte 3 \emph{pop}-Operationen ab $t_0+1$. Um die ersten zwei Operationen zu bedienen, muss $a \in \Gamma_{t_0}(2)$ und $b \in \Gamma_{t_0+1}(2)$ gelten, wegen $t_0$ stabil sogar schon $b \in \Gamma_{t_0}(2)$. Es folgt aus \thref{lem:2tape-halffilled} $c \notin \Gamma_{t_0}(2)$ und wiederum aus Stabilitätsgründen $c \notin \Gamma_{t_0+2}(2)$. Die dritte Operation kann also nicht bedient werden.
+    \end{beweis}
+\end{satz}
 
 \end{document}
