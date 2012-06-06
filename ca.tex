@@ -7,6 +7,8 @@
 \usepackage[hyperref,standard,thref]{ntheorem}
 \usepackage{hyperref}
 
+\DeclareMathOperator{\bild}{Bild}
+
 \begin{document}
 
 \newcommand{\ca}{\ensuremath\mathcal{A}}
@@ -33,15 +35,35 @@
 \end{satz}
 
 \begin{definition}
-    Für eine zelluläre Datenstruktur mit einer Operation \emph{pop} ohne Zeitverlust sei $\Gamma_t(n) \subseteq \Sigma^*$ die Buchstabenfolge, die bei $n$-maligem Aufruf von \emph{pop} ab dem Zeitpunkt $t$ zurückgegeben wird.
+    Für eine zelluläre Datenstruktur mit einer Operation \emph{pop} ohne Zeitverlust sei $\Gamma_t(n) \subseteq \Sigma^*$ die Buchstabenfolge, die bei wiederholtem Aufruf von \emph{pop} ab dem Zeitpunkt $t$ zurückgegeben wird, wenn die ersten $n$ Zellen als eigener Automat betrachtet werden.
 
-    Für Automaten mit Zustandsmenge $\Sigma^k$ ist dies normalerweise die Konkatenation der Zellinhalte.
-\end{definition}
+    Für Automaten mit Zustandsmenge $\Sigma^k$ ist dies normalerweise die Konkatenation der Inhalt der ersten $n$ Zellen.
     Für den Gesamtinhalt setzen wir noch $\Gamma_t := \Gamma_t(\infty)$.
+\end{definition}
+
+Für das Ergebnis $a \in \Sigma$ einer \emph{pop}-Operation ist $a$ Präfix von $\Gamma_t$ und, da \emph{pop} ohne Zeitverlust agiert, sogar von $\Gamma_t(2)$. Aus der Signalgeschwindigkeit folgt allgemein:
 \begin{korollar}
-    \label{cor:spacesize}
-    Aus \thref{thm:tape-hom} folgt für $k$-Band-Automaten: $\abs{\Gamma_t(n)} \leq kn$
+    \label{thm:gamma-in-gamma}
+    Für $w \in \Sigma^*$ Präfix von $\Gamma_t$ ist w schon Präfix von $\Gamma_t(\abs{w}+1)$.
 \end{korollar}
+
+\begin{satz}
+    \label{cor:spacesize}
+    Für $k$-Band-Automaten gibt es für alle $n \in \mathbb{N}, m > kn$ ein Alphabet $\Sigma$ und ein Wort $w \in \Sigma^m$, nach dessen Pushen gilt:
+    \[ \abs{\Gamma_t(n)} \leq kn \]
+    \begin{beweis}
+        Definiere die zu $\Gamma$ gehörige Abbildung
+        \[ \gamma_n : Q^n \rightarrow \Sigma^*, \gamma_n(c_t(1), \dots, c_t(n)) = \Gamma_t(n)\]
+        Angenommen, es gälte für ein $n$ und $m$ und alle Alphabete $\Sigma$ und Konfigurationen $\abs{\Gamma_t(n)} > kn$, also $\abs{\bild(\gamma_n)} \geq \abs{\Sigma}^{kn+1}$.
+        Es folgt
+        \[ \abs\Sigma^{kn+1} < \abs{\bild{\gamma_n}} \leq \abs{Q^n} \leq (\ceil{c}\abs{\Sigma}^k)^n = \abs{\Sigma}^{kn} \ceil{c}^n \]
+        also
+        \[ kn + 1 \leq kn + n \log_{\abs\Sigma}(\ceil{c}) \]
+        Für $\abs{\Sigma}$ groß genug ergibt sich der Widerspruch.
+    \end{beweis}
+\end{satz}
+
+Im Folgenden seien $\Sigma$ und $w$ für alle Push-Operationen entsprechend gewählt.
 
 \begin{korollar}
     \label{cor:signalpush}
