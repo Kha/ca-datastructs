@@ -16,8 +16,6 @@
 \newcommand{\ceil}[1]{\lceil#1\rceil}
 \newcommand{\zrange}[1]{\mathbb{G}_{#1}}
 
-\section{Foo}
-
 \begin{definition}
     Wir nennen eine Familie von Zellularautomaten $\ca_\Sigma$ \emph{$k$-Band-Automaten}, falls für die jeweilige Zustandsmenge $Q_\Sigma$ gilt:
     \begin{equation}
@@ -25,19 +23,23 @@
     \end{equation}
 \end{definition}
 
+Die tatsächliche Form der Zustandsmenge des Automaten kann beliebig weit von $k$-Tupeln entfernt sein, aber \eqref{def:ntape} sichert zu, dass wir sie stets auf unsere gewohnte Definition eines $k$-Bandes zurückführen können:
+
 \begin{satz}
     \label{thm:tape-hom}
-    Jeder $k$-Band-Automat ist homomorph zu einem Automat mit der Zustandsmenge $\zrange{\ceil{c}} \times \Sigma^n$, wobei $c$ die Konstante aus dem $\mathcal{O}$-Kalkül in \eqref{def:ntape} ist.
+    Jeder $k$-Band-Automat lässt sich in einen Automaten mit der Zustandsmenge $\zrange{\ceil\alpha} \times \Sigma^k$ überführen, der an seinen Operationen gemessen gleich arbeitet. Dabei ist $\alpha$ die Konstante aus dem $\mathcal{O}$-Kalkül in \eqref{def:ntape}.
 
     \begin{beweis}
-        Die Aussage folgt wegen $\abs{Q_\Sigma} \leq c \abs{\Sigma}^k \leq \ceil{c} \abs{\Sigma}^k$ aus Mächtigkeitsargumenten.
+        Die Aussage folgt wegen $\abs{Q_\Sigma} \leq \alpha \abs{\Sigma}^k \leq \ceil\alpha \abs{\Sigma}^k$ aus Mächtigkeitsargumenten.
     \end{beweis}
 \end{satz}
+
+Dieser Satz sagt allerdings nichts aus über die tatsächliche Speicherung der Inhalte im Zellraum, insbesondere muss ein gepushtes Zeichen $a \in \Sigma$ nicht in dieser Form überhaupt auf einem Band stehen. Um den Inhalt zu inspizieren, muss also auf die externen Operationen zurückgegriffen werden:
 
 \begin{definition}
     Für eine zelluläre Datenstruktur mit einer Operation \emph{pop} ohne Zeitverlust sei $\Gamma_t(n) \subseteq \Sigma^*$ die Buchstabenfolge, die bei wiederholtem Aufruf von \emph{pop} ab dem Zeitpunkt $t$ zurückgegeben wird, wenn die ersten $n$ Zellen als eigener Automat betrachtet werden.
 
-    Für Automaten mit Zustandsmenge $\Sigma^k$ ist dies normalerweise die Konkatenation der Inhalt der ersten $n$ Zellen.
+    Für Automaten mit Zustandsmenge $\Sigma^k$ ist dies normalerweise die Konkatenation des Inhalts der ersten $n$ Zellen.
     Für den Gesamtinhalt setzen wir noch $\Gamma_t := \Gamma_t(\infty)$.
 \end{definition}
 
@@ -47,6 +49,7 @@ Für das Ergebnis $a \in \Sigma$ einer \emph{pop}-Operation ist $a$ Präfix von 
     Für $w \in \Sigma^*$ Präfix von $\Gamma_t$ ist w schon Präfix von $\Gamma_t(\abs{w}+1)$.
 \end{korollar}
 
+Mit diesem Hilfsmittel kann nun ein Satz gezeigt werden, der bei den gewöhnlichen $k$-Band-Automaten offensichtlich ist: In $n$ Zellen können höchstens $kn$ Buchstaben gespeichert werden. Zwar könnte ein spezieller Automat einzelne Eingabewörter im Zellraum komprimieren, es wird aber immer ein Wort geben, das nicht komprimierbar ist:
 \begin{satz}
     \label{cor:spacesize}
     Für $k$-Band-Automaten gibt es für alle $n \in \mathbb{N}, m > kn$ ein Alphabet $\Sigma$ und ein Wort $w \in \Sigma^m$, nach dessen Pushen gilt:
@@ -54,7 +57,7 @@ Für das Ergebnis $a \in \Sigma$ einer \emph{pop}-Operation ist $a$ Präfix von 
     \begin{beweis}
         Definiere die zu $\Gamma$ gehörige Abbildung
         \[ \gamma_n : Q^n \rightarrow \Sigma^*, \gamma_n(c_t(1), \dots, c_t(n)) = \Gamma_t(n)\]
-        Angenommen, es gälte für ein $n$ und $m$ und alle Alphabete $\Sigma$ und Konfigurationen $\abs{\Gamma_t(n)} > kn$, also $\abs{\bild(\gamma_n)} \geq \abs{\Sigma}^{kn+1}$.
+        Angenommen, es gälte für ein $n$ und $m$ und alle Alphabete $\Sigma$ und Konfigurationen $c_t$ $\abs{\Gamma_t(n)} > kn$, also $\abs{\bild(\gamma_n)} \geq \abs{\Sigma}^{kn+1}$.
         Es folgt
         \[ \abs\Sigma^{kn+1} < \abs{\bild{\gamma_n}} \leq \abs{Q^n} \leq (\ceil{c}\abs{\Sigma}^k)^n = \abs{\Sigma}^{kn} \ceil{c}^n \]
         also
@@ -79,7 +82,7 @@ Im Folgenden seien $\Sigma$ und $w$ für alle Push-Operationen entsprechend gew�
     \[ \abs{\Gamma_{t_0+m}(n)} = n \quad\forall\, 1 \leq n \leq \abs{\Gamma_{t_0}},m > n \]
     Anschaulich: Das zweite Band ist danach ungefüllt.
     \begin{beweis}
-        Wir nehmen an, es gäbe $m$ und $n$, sodass $\abs{\Gamma_{t_0+m}(n)} \geq n$. Betrachten wir die alternativen Konfigurationen $c'$, die durch Pushen von $w$, $\abs{w}=n$ Zeichen ab dem Zeitpunkt $t_0+(m-n)+1$ entstehen würden, so gilt wegen der Signalgeschwindigkeit $c_{t_0+m}(n') = c'_{t_0+m}(n') \;\forall n' > n$, also ist $\Gamma_{t_0+m}(n)$ Suffix von $\Gamma'_{t_0+m}(n)$, mit \thref{cor:signalpush} insgesamt $\Gamma'_{t_0+m}(n) = w \cdot \Gamma_{t_0+m}(n)$. Es folgt $\abs{\Gamma'_{t_0+m}(n)} = n + \abs{\Gamma_{t_0+m}(n)} > n + n$, ein Widerspruch zu \thref{cor:spacesize}.
+        Wir nehmen an, es gäbe $m$ und $n$, sodass $\abs{\Gamma_{t_0+m}(n)} > n$. Betrachten wir die alternativen Konfigurationen $c'$, die durch Pushen von $w$, $\abs{w}=n$ Zeichen ab dem Zeitpunkt $t_0+(m-n)+1$ entstehen würden, so gilt wegen der Signalgeschwindigkeit $c_{t_0+m}(n') = c'_{t_0+m}(n') \;\forall n' > n$, also ist $\Gamma_{t_0+m}(n)$ Suffix von $\Gamma'_{t_0+m}(n)$, mit \thref{cor:signalpush} insgesamt $\Gamma'_{t_0+m}(n) = w \cdot \Gamma_{t_0+m}(n)$. Es folgt $\abs{\Gamma'_{t_0+m}(n)} = n + \abs{\Gamma_{t_0+m}(n)} > n + n$, ein Widerspruch zu \thref{cor:spacesize}.
     \end{beweis}
 \end{lemma}
 
