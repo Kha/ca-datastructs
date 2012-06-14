@@ -37,59 +37,43 @@ Die tatsächliche Form der Zustandsmenge des Automaten kann beliebig weit von $k
 Dieser Satz sagt allerdings nichts aus über die tatsächliche Speicherung der Inhalte im Zellraum, insbesondere muss ein gepushtes Zeichen $a \in \Sigma$ nicht in dieser Form überhaupt auf einem Band stehen. Um den Inhalt zu inspizieren, muss also auf die externen Operationen zurückgegriffen werden:
 
 \begin{definition}
-    Für eine zelluläre Datenstruktur mit einer Operation \emph{pop} ohne Zeitverlust sei $\Gamma_t(n) \subseteq \Sigma^*$ die Buchstabenfolge, die bei wiederholtem Aufruf von \emph{pop} ab dem Zeitpunkt $t$ zurückgegeben wird, wenn die ersten $n$ Zellen als eigener Automat betrachtet werden.
+    Für eine zelluläre Datenstruktur mit einer Operation \emph{pop} ohne Zeitverlust sei in Konfiguration $c$ $\Gamma(c) \subseteq \Sigma^*$ ihr \emph{Inhalt}, also die Buchstabenfolge, die bei wiederholtem Aufruf von \emph{pop} zurückgegeben wird.
+
+    Den Inhalt der ersten $n$ Zellen definieren wir als
+        \[ \Gamma(c,n) := \Gamma(c) \big|_m \]
+    wobei $\Gamma(c) \big|_m$ den Präfix von $\Gamma(c)$ der Länge $m$ bezeichnet und $m$ definiert ist als
+    \[ m := \max \{m' \in \mathbb{N} \mid \Gamma(c) \big|_{m'} = \Gamma(c') \big|_{m'} \;\forall c' \text{ valide Konfiguration}, c' \big|_n = c \big|_n \} \]
+    also $\Gamma(c,n)$ längster gemeinsamer Inhaltspräfix aller Konfigurationen mit den gleichen ersten $n$ Zellen ist oder anders gesagt der Inhalt, der von allen Zellen $> n$ unabhängig ist.
 
     Für Automaten mit Zustandsmenge $\Sigma^k$ ist dies normalerweise die Konkatenation des Inhalts der ersten $n$ Zellen.
-    Für den Gesamtinhalt setzen wir noch $\Gamma_t := \Gamma_t(\infty)$.
 \end{definition}
 
-Für das Ergebnis $a \in \Sigma$ einer \emph{pop}-Operation ist $a$ Präfix von $\Gamma_t$ und, da \emph{pop} ohne Zeitverlust agiert, sogar von $\Gamma_t(2)$. Aus der Signalgeschwindigkeit folgt allgemein:
-\begin{korollar}
-    \label{thm:gamma-in-gamma}
-    Für $w \in \Sigma^*$ Präfix von $\Gamma_t$ ist w schon Präfix von $\Gamma_t(\abs{w}+1)$.
-\end{korollar}
+\begin{satz}
+    \label{thm:locontent}
+    Nach Pushen von $2n-3$ Zeichen gibt es einen Zeitpunkt $t_0$, sodass $\abs{\Gamma(c,n)} \geq 2n-3$.
+    \begin{beweis}
+        Welchen Präfix von $\Gamma(c)$ kann eine Konfiguration $c'$ mit $c' \big|_n = c \big|_n$ verändern? Das Signal des ersten Pops erreicht $c'(n+1) \neq c(n+1)$ zum Zeitpunkt $t_0+n$. Damit könnte $c'^{t_0+n-1+n-2}(2)$ beeinflusst werden, also die $2n-3$-te Pop-Operation.
+    \end{beweis}
+\end{satz}
 
-Mit diesem Hilfsmittel kann nun ein Satz gezeigt werden, der bei den gewöhnlichen $k$-Band-Automaten offensichtlich ist: In $n$ Zellen können höchstens $kn$ Buchstaben gespeichert werden. Zwar könnte ein spezieller Automat einzelne Eingabewörter im Zellraum komprimieren, es wird aber immer ein Wort geben, das nicht komprimierbar ist:
 \begin{satz}
     \label{cor:spacesize}
-    Für $k$-Band-Automaten gibt es für alle $n \in \mathbb{N}, m > kn$ ein Alphabet $\Sigma$ und ein Wort $w \in \Sigma^m$, nach dessen Pushen gilt:
-    \[ \abs{\Gamma_t(n)} \leq kn \]
+    Für $k$-Band-Automaten gibt es für alle $n \in \mathbb{N}, l > kn$ ein Alphabet $\Sigma$ und ein Wort $w \in \Sigma^l$, nach dessen Pushen gilt:
+    \[ \abs{\Gamma(c,n)} \leq kn \]
     \begin{beweis}
-        Definiere die zu $\Gamma$ gehörige Abbildung
-        \[ \gamma_n : Q^n \rightarrow \Sigma^*, \gamma_n(c_t(1), \dots, c_t(n)) = \Gamma_t(n)\]
-        Angenommen, es gälte für ein $n$ und $m$ und alle Alphabete $\Sigma$ und Konfigurationen $c_t$ $\abs{\Gamma_t(n)} > kn$, also $\abs{\bild(\gamma_n)} \geq \abs{\Sigma}^{kn+1}$.
+        Angenommen, es gälte für ein $n$ und $l$ und alle Alphabete $\Sigma$ und Konfigurationen $c$ $\abs{\Gamma(c,n)} > kn$, also $\abs{\bild(\Gamma(\cdot,n))} \geq \abs{\Sigma}^{kn+1}$.
         Es folgt
-        \[ \abs\Sigma^{kn+1} < \abs{\bild{\gamma_n}} \leq \abs{Q^n} \leq (\ceil{c}\abs{\Sigma}^k)^n = \abs{\Sigma}^{kn} \ceil{c}^n \]
+        \[ \abs\Sigma^{kn+1} < \abs{\bild(\Gamma(\cdot,n))} \leq \abs{Q^n} \leq (\ceil{c}\abs{\Sigma}^k)^n = \abs{\Sigma}^{kn} \ceil{c}^n \]
         also
         \[ kn + 1 \leq kn + n \log_{\abs\Sigma}(\ceil{c}) \]
         Für $\abs{\Sigma}$ groß genug ergibt sich der Widerspruch.
     \end{beweis}
 \end{satz}
 
-Im Folgenden seien $\Sigma$ und $w$ für alle Push-Operationen entsprechend gewählt.
-
-\begin{korollar}
-    \label{cor:signalpush}
-    Aus der Signalgeschwindigkeit in Zellularautomaten folgt: Wird in Schritt $t_0+1$ ein Zeichen $a \in \Sigma$ gepusht, gilt für $t > t_0$:
-    \begin{equation}
-        a \in \Gamma_t(t-t_0) \label{cor:signal}
-    \end{equation}
-\end{korollar}
-
-\begin{lemma}
-    \label{lem:2tape-halffilled}
-    Für 2-Band-Automaten gilt nach Pushen eines Zeichens zum Zeitpunkt $t_0 + 1$, falls keine weiteren Aktionen folgen:
-    \[ \abs{\Gamma_{t_0+m}(n)} = n \quad\forall\, 1 \leq n \leq \abs{\Gamma_{t_0}},m > n \]
-    Anschaulich: Das zweite Band ist danach ungefüllt.
-    \begin{beweis}
-        Wir nehmen an, es gäbe $m$ und $n$, sodass $\abs{\Gamma_{t_0+m}(n)} > n$. Betrachten wir die alternativen Konfigurationen $c'$, die durch Pushen von $w$, $\abs{w}=n$ Zeichen ab dem Zeitpunkt $t_0+(m-n)+1$ entstehen würden, so gilt wegen der Signalgeschwindigkeit $c_{t_0+m}(n') = c'_{t_0+m}(n') \;\forall n' > n$, also ist $\Gamma_{t_0+m}(n)$ Suffix von $\Gamma'_{t_0+m}(n)$, mit \thref{cor:signalpush} insgesamt $\Gamma'_{t_0+m}(n) = w \cdot \Gamma_{t_0+m}(n)$. Es folgt $\abs{\Gamma'_{t_0+m}(n)} = n + \abs{\Gamma_{t_0+m}(n)} > n + n$, ein Widerspruch zu \thref{cor:spacesize}.
-    \end{beweis}
-\end{lemma}
-
 \begin{satz}
     Es gibt keinen 2-Band-Automaton mit \emph{pop}-Operation ohne Zeitverlust.
     \begin{beweis}
-        Betrachte nach Einfügen der Elemente $a, b, c, d$ 4 \emph{pop}-Operationen ab $t_0+1$. Um die ersten zwei Operationen zu bedienen, muss $a \in \Gamma_{t_0+1}(2)$ und $b \in \Gamma_{t_0+2}(2)$ gelten, wegen der Signalgeschwindigkeit sogar schon $b \in \Gamma_{t_0+1}(2)$. Analog folgt aus $c \in \Gamma_{t_0+3}(2) c \in \Gamma_{t_0+1}(3)$. Es folgt aus \thref{lem:2tape-halffilled} $d \notin \Gamma_{t_0+1}(3)$ und wiederum aus Geschwindigkeitsgründen $d \notin \Gamma_{t_0+4}(2)$. Die vierte Operation kann also nicht bedient werden.
+        Wähle $w \in \Sigma^{2n+1}$ nach \thref{cor:spacesize}. Nach Pushen von $w \big|_{2n-3}$ gibt es nach \thref{thm:locontent} $t_0$, sodass $\abs{\Gamma(c,n)} \geq 2n-3$. Pushe dann die letzten vier Buchstaben und es gilt, da $c(n+1)$ nicht beeinflusst worden sein kann, $\abs{\Gamma(c,n)} \geq 2n+1$, im Widerspruch zu \thref{cor:spacesize}.
     \end{beweis}
 \end{satz}
 
