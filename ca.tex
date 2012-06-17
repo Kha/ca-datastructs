@@ -7,14 +7,76 @@
 \usepackage[hyperref,standard,thref]{ntheorem}
 \usepackage{hyperref}
 
-\DeclareMathOperator{\bild}{Bild}
-
 \begin{document}
 
 \newcommand{\ca}{\ensuremath\mathcal{A}}
 \newcommand{\abs}[1]{\lvert#1\rvert}
 \newcommand{\ceil}[1]{\lceil#1\rceil}
 \newcommand{\zrange}[1]{\mathbb{G}_{#1}}
+\newcommand{\bild}[1]{\text{Bild}(#1)}
+\newcommand{\N}{\mathbb{N}}
+
+\section{Einführung}
+
+\section{Definition}
+Wir betrachten Datenstrukturen mit Von-Neumann-Nachbarschaft von Radius 1 auf dem Gitter $R = \N$, das wir als nach rechts offenes Band darstellen. Für Zellen ab Position 2 existiert also eine Übergangsfunktion $\delta : Q^3 \rightarrow Q$, die den neuen Zustand einer Zelle in Abhängigkeit des Zustands ihres linken Nachbarn, der Zelle selbst und ihres rechten Nachbarn bestimmt.
+
+Die erste Zelle dagegen besitzt keinen linken Nachbarn, kann allerdings Befehle von außerhalb des Automaten (bildlich "`von links"') entgegennehmen, welche wir bei den betrachteten Datenstrukturen Stack und Queue beide Male \emph{push} und \emph{pop} nennen wollen. Zusammen mit einer Operation \emph{nop}, der Nulloperation, können wir damit das Verhalten der ersten Zelle und gleichzeitig das von außen sichtbare Verhalten der ganzen Datenstruktur durch drei Übergangsfunktionen
+\begin{align*}
+    \delta_{push} &: \Sigma \times Q^2 \rightarrow Q \\
+    \delta_{pop} &: Q^2 \rightarrow (\Sigma \cup \{\epsilon\}) \times Q  \\
+    \delta_{nop} &: Q^2 \rightarrow Q
+\end{align*}
+beschreiben. Dabei ist das Alphabet $\Sigma$ von der letztendlichen Anwendung der Datenstruktur abhängig und $\epsilon \in \bild{\delta_{pop}}$ bedeutet, dass die Datenstruktur leer ist.
+
+Auf Basis der vier $\delta$ seien entsprechend noch definiert
+\begin{align*}
+    \Delta_{push} &: \Sigma \times Q^\N \rightarrow Q^\N \\
+    \Delta_{pop} &: Q^\N \rightarrow (\Sigma \cup \{\epsilon\}) \times Q^\N \\
+    \Delta_{nop} &: Q^\N \rightarrow Q^\N
+\end{align*}
+Da wir aber auch Datenstrukturen betrachten wollen, die mit Zeitverlust agieren, definieren wir noch
+\begin{align*}
+    \Delta^*_{push} &: \Sigma \times Q^\N \rightarrow Q^\N,& (a,c) &\mapsto \Delta_{push}(a,\Delta^i_{nop}(c)) \\
+    \Delta^*_{pop} &: Q^\N \rightarrow (\Sigma \cup \{\epsilon\}) \times Q^\N,& c &\mapsto \Delta_{push}(\Delta^i_{nop}(c))
+\end{align*}
+Die Zahl $i$ der notwendigen Nulloperationen vor der eigentlichen Operation ist dabei von der Implementierung der Datenstruktur, möglicherweise sogar von der Konfiguration $c$ abhängig.
+
+Natürlich wollen wir noch Bedingungen an das Verhalten einer Datenstruktur stellen. Dazu müssen wir aber Aussagen über den \emph{Inhalt} der Datenstruktur machen können:
+\begin{definition}
+    Für eine globale Konfiguration $c \in Q^\N$ sei $\Gamma(c) \in \Sigma^*$ die Folge von Zeichen, die bei wiederholtem Aufruf von \emph{pop} zurückgegeben werden:
+    $$ \Gamma(c) := \begin{cases}
+        \epsilon &\text{falls } \Delta^*_{pop}(c) \in \epsilon \times Q^\N \\
+        a \cdot \Gamma(c') &\text{falls }\Delta^*_{pop}(c)=:(a,c') \in \Sigma \times Q^\N
+    \end{cases} $$
+\end{definition}
+
+Nun lassen sich die erwarteten Eigenschaften einer Implementierung endlich formal definieren:
+\begin{definition}
+    Wir nennen einen Zellularautomaten $(Q, \delta, \delta_{push}, \delta_{pop}, \delta_{nop}, q_0)$ einen Stack, falls er folgende Axiome erfüllt:
+
+    Für jede \emph{valide} Konfiguration $c$, also eine aus $c_0 \equiv q_0$ durch beliebig wiederholte Anwendung der drei $\Delta$ ableitbare Konfiguration, muss gelten:
+    \begin{enumerate}
+        \item $\forall a \in \Sigma: \Gamma(\Delta^*_{push}(a,c)) = a \cdot \Gamma(c)$
+        \item $\forall a \in \Sigma, w \in \Sigma^*: \left[ \Gamma(c) = a \cdot w \Rightarrow \Gamma(\Delta^*_{pop}(c)) = w \right]$
+        \item $\Gamma(c) = \epsilon \Rightarrow \Gamma(\Delta^*_{pop}(c)) = \epsilon $
+        \item $\Gamma(\Delta_{nop}(c)) = \Gamma(c)$
+    \end{enumerate}
+    Insbesondere arbeitet der \emph{ohne Zeitverlust}, falls die Axiome schon durch $\Delta_{push}$ und $\Delta_{pop}$ erfüllt werden.
+\end{definition}
+
+Analog kann eine Queue-Struktur formal definiert werden.
+
+\begin{beispiel}
+    Gegeben eine Stack-Implementierung $(Q_S, \delta_S, \delta_{push}, \delta_{pop}, \delta_{nop}, q^S_0)$ ohne Zeitverlust, können wir mit zwei Stacks eine Turing-Maschine $(Q_T, \Sigma, \delta_T, q^T_0, q_f)$ simulieren (das Bandalphabet sei der Einfachheit halber das Eingabealphabet). Dazu speichern wir in Zelle 1 zusätzlich zu den zwei Stackköpfen den aktuellen Zustand und das Symbol unter dem Lesekopf. Es ergibt sich $Q := Q_T \times \Sigma \times Q^2_S \cup Q^2_S$ und die Übergangsfunktion
+    \[ \delta_1((q_T, a, q^{S1}_1, q^{S2}_1), (q^{S1}_2, q^{S2}_2)) :=
+    \begin{cases}
+        (q', a', \delta_{nop}(q^{S1}_1, q^{S1}_2), \delta_{nop}(q^{S2}_1, q^{S2}_2)) &\text{für } \delta_T(q, a) = (q', a', N) \\
+        (q', a_L, q'^{S1}_1, \delta_{push}(a', q^{S2}_1, q^{S2}_2))) &\text{für } \delta_T(q, a) = (q', a', L), \delta_{pop}(q^{S1}_1, q^{S2}_2) = (a_L, q'^{S1}_1)
+    \end{cases} \]
+\end{beispiel}
+
+\section{Doofer Beweis}
 
 \begin{definition}
     Wir nennen eine Familie von Zellularautomaten $\ca_\Sigma$ \emph{$k$-Band-Automaten}, falls für die jeweilige Zustandsmenge $Q_\Sigma$ gilt:
@@ -42,7 +104,7 @@ Dieser Satz sagt allerdings nichts aus über die tatsächliche Speicherung der I
     Den Inhalt der ersten $n$ Zellen definieren wir als
         \[ \Gamma(c,n) := \Gamma(c) \big|_m \]
     wobei $\Gamma(c) \big|_m$ den Präfix von $\Gamma(c)$ der Länge $m$ bezeichnet und $m$ definiert ist als
-    \[ m := \max \{m' \in \mathbb{N} \mid \Gamma(c) \big|_{m'} = \Gamma(c') \big|_{m'} \;\forall c' \text{ valide Konfiguration}, c' \big|_n = c \big|_n \} \]
+    \[ m := \max \{m' \in \N \mid \Gamma(c) \big|_{m'} = \Gamma(c') \big|_{m'} \;\forall c' \text{ valide Konfiguration}, c' \big|_n = c \big|_n \} \]
     also $\Gamma(c,n)$ längster gemeinsamer Inhaltspräfix aller Konfigurationen mit den gleichen ersten $n$ Zellen ist oder anders gesagt der Inhalt, der von allen Zellen $> n$ unabhängig ist.
 
     Für Automaten mit Zustandsmenge $\Sigma^k$ ist dies normalerweise die Konkatenation des Inhalts der ersten $n$ Zellen.
@@ -58,7 +120,7 @@ Dieser Satz sagt allerdings nichts aus über die tatsächliche Speicherung der I
 
 \begin{satz}
     \label{cor:spacesize}
-    Für $k$-Band-Automaten gibt es für alle $n \in \mathbb{N}, l > kn$ ein Alphabet $\Sigma$ und ein Wort $w \in \Sigma^l$, nach dessen Pushen gilt:
+    Für $k$-Band-Automaten gibt es für alle $n \in \N, l > kn$ ein Alphabet $\Sigma$ und ein Wort $w \in \Sigma^l$, nach dessen Pushen gilt:
     \[ \abs{\Gamma(c,n)} \leq kn \]
     \begin{beweis}
         Angenommen, es gälte für ein $n$ und $l$ und alle Alphabete $\Sigma$ und Konfigurationen $c$ $\abs{\Gamma(c,n)} > kn$, also $\abs{\bild(\Gamma(\cdot,n))} \geq \abs{\Sigma}^{kn+1}$.
