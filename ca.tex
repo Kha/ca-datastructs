@@ -15,6 +15,7 @@
 \newcommand{\zrange}[1]{\mathbb{G}_{#1}}
 \newcommand{\bild}[1]{\text{Bild}(#1)}
 \newcommand{\N}{\mathbb{N}}
+\newcommand{\ve}[3]{\begin{pmatrix}#1\\#2\\#3\end{pmatrix}}
 
 \section{Einführung}
 
@@ -46,10 +47,10 @@ Die Zahl $i$ der notwendigen Nulloperationen vor der eigentlichen Operation ist 
 Natürlich wollen wir noch Bedingungen an das Verhalten einer Datenstruktur stellen. Dazu müssen wir aber Aussagen über den \emph{Inhalt} der Datenstruktur machen können:
 \begin{definition}
     Für eine globale Konfiguration $c \in Q^\N$ sei $\Gamma(c) \in \Sigma^*$ die Folge von Zeichen, die bei wiederholtem Aufruf von \emph{pop} zurückgegeben werden:
-    $$ \Gamma(c) := \begin{cases}
+    \[ \Gamma(c) := \begin{cases}
         \epsilon &\text{falls } \Delta^*_{pop}(c) \in \epsilon \times Q^\N \\
         a \cdot \Gamma(c') &\text{falls }\Delta^*_{pop}(c)=:(a,c') \in \Sigma \times Q^\N
-    \end{cases} $$
+    \end{cases} \]
 \end{definition}
 
 Nun lassen sich die erwarteten Eigenschaften einer Implementierung endlich formal definieren:
@@ -90,6 +91,61 @@ und Zelle 1
     \end{cases} \]
 und analog für Zelle -1.
 \end{beispiel}
+
+\section{Stack: Implementierungen}
+
+Martin Kutrib beschreibt in [] einen Stack ohne Zeitverlust mit der Zustandsmenge $(\Sigma \cup \{\epsilon\})^3$ mit $q_0 = (\epsilon,\epsilon,\epsilon)$, was er einen \emph{3-Band-Automaten} nennt, die drei Werte des Tupels \emph{Register}.
+
+Der Inhalt eines solchen Automaten ist die Konkatenation seiner Zellinhalte:
+\begin{align*}
+    \gamma(\ve{r_1}{r_2}{r_3}) &:= r_1 \\
+\Gamma(c) &= \sum^\infty_{i=1} c(i)
+\end{align*}
+Diese Summe ist endlich, da sich in jeder validen, also in endlicher Zeit aus dem leeren Band entstandenen Konfiguration nur endlich viele Zellen von $q_0$ unterscheiden können.
+
+Jede Zelle des Automaten versucht, genau zwei ihrer Register gefüllt zu halten (wobei in jedem Zustand die vollen Register vor den leeren stehen werden). Für die Übergangsfunktion folgen folgende Regeln:
+\begin{enumerate}
+    \item Eine Zelle mit drei vollen Registern gibt den Inhalt ihres dritten Registers an ihren rechten Nachbarn ab, der ihn seinen Registern voranstellt.
+    \item Eine Zelle mit weniger als zwei vollen Registern stiehlt das erste Register ihres rechten Nachbarn, falls gefüllt.
+\end{enumerate}
+
+Betrachten wir beide Regeln jeweils aus Sicht der \emph{Quell-} und \emph{Zielzelle}, ergeben sich die vier Übergangsfunktionen
+\begin{align*}
+    \delta_{pushQuelle}(q_1,\ve{r_1}{r_2}{r_3},q_3) &= \ve{r_1}{r_2}{\epsilon} \\
+    %\delta_{pushQuelle}(q_1,q_2,q_3) &= (q_{21}, q_{22}, \epsilon) \\
+    \delta_{pushZiel}(\ve{r_1}{r_2}{r_3},\ve{s_1}{s_2}{s_3},q_3) &= \ve{r_3}{s_1}{s_2} \text{ falls } r_3 \in \Sigma \\
+    \delta_{popQuelle}(\ve{r_1}{\epsilon}{\epsilon},\ve{s_1}{s_2}{s_3},q_3) &= \ve{s_2}{s_3}{\epsilon} \text { falls } s_1 \in \Sigma \\
+    \delta_{popZiel}(q_1,\ve{r_1}{\epsilon}{\epsilon},\ve{s_1}{s_2}{s_3}) &= \begin{cases}
+        \ve{r_1}{s_1}{\epsilon} &\text { falls } s_1,r_1 \in \Sigma \\
+        \ve{s_1}{\epsilon}{\epsilon} &\text { falls } r_1 \in \Sigma, r_1 = \epsilon
+    \end{cases}
+\end{align*}
+In allen nichtspezifizierten Fällen sei der Zellzustand unverändert.
+
+Da in einem Zeitschritt gegebenenfalls mehrere Fälle auf die gleiche Zelle zutreffen können, müssen diese vier Funktionen noch in der richtigen Reihenfolge zusammengesetzt werden. Die Definition einer \emph{Komposition} von Übergangsfunktionen ist noch recht naheliegend:
+\begin{align*}
+    \circ : Q^{Q \times Q \times Q} \times Q^{Q \times Q \times Q} &\rightarrow Q^{Q \times Q \times Q} \\
+    (\delta_1 \circ \delta_2)(q_1,q_2,q_3) &:= \delta_1(q_1,\delta_2(q_1,q_2,q_3),q_3)
+\end{align*}
+Schwieriger ist dagegen die Festlegung der Reihenfolge. Es ergeben sich folgende Einschränkungen:
+\begin{enumerate}
+    \item $pushZiel \leftarrow pushQuelle$: Wurde gerade ein Zeichen in die Zelle gepusht und dadurch alle Register gefüllt, darf $pushQuelle$ das letzte Register nicht im gleichen Zeitschritt wieder leeren.
+    \item $popQuelle \leftarrow popZiel$: Wurde durch $popQuelle$ die Zahl der gefüllten Zellen von zwei auf eine verringert, darf $popZiel$ im gleichen Zeitschritt nicht schon ein Zeichen von rechts übernehmen, da für den rechten Nachbarn die Zelle noch nicht unterfüllt erscheint.
+    \item $popQuelle \leftarrow pushQuelle$: Sieht der rechte Nachbar eine voll gefüllte Zelle und wird das dritte Register übernehmen, darf $pushQuelle$ dessen Inhalt nicht ins zweite Register schieben.
+    \item $pushZiel \leftarrow popZiel$: Sieht der rechte Nachbar, dass nur eine Zelle gefüllt ist, und wird sein erstes Register löschen, muss $popZiel$ dieses übernehmen, bevor $pushZiel$ die Zahl der gefüllten Register ggf. auf 2 erhöht.
+\end{enumerate}
+
+Damit ergibt sich als eine von vier Möglichkeiten
+    \[ \delta := \delta_{pushZiel} \circ \delta_{popQuelle} \circ \delta_{popZiel} \circ \delta_{pushQuelle} \]
+
+Es verbleiben die Übergangsfunktionen des Stackkopfes. Diese können in diesem Fall allerdings leicht aus $\delta$ abgeleitet werden, indem die jeweilige Operation als virtuelle Zelle links vom Kopf betrachtet wird:
+\begin{align*}
+    \delta_{push}(a, q_1, q_2) &:= \delta(\ve{b}{b}{a}, q_1, q_2) \\
+    \delta_{pop}(q_1, q_2) &:= \delta(\ve{\epsilon}{\epsilon}{\epsilon}, q_1, q_2) \\
+    \delta_{nop}(q_1, q_2) &:= \delta(\ve{b}{b}{\epsilon}, q_1, q_2) \\
+\end{align*}
+wobei $b \in \Sigma$ beliebig ist.
+
 
 \section{Doofer Beweis}
 
