@@ -1,4 +1,9 @@
+% vim: spelllang=de_20
 \documentclass{article}
+
+\title{Zellularautomaten: Datenstrukturen}
+\author{Sebastian Ullrich}
+\date{Sommersemester 2012}
 
 \usepackage[utf8]{inputenc}
 \usepackage[ngerman]{babel}
@@ -20,24 +25,28 @@
 \newcommand{\N}{\mathbb{N}}
 \newcommand{\ve}[3]{\begin{pmatrix}#1\\#2\\#3\end{pmatrix}}
 
-\section{Einführung}
-
+\maketitle
 \newpage
+
+\begin{abstract}
+    Um die Mächtigkeit des Berechnungsmodells der Zellularautomaten zu zeigen, bieten sich Reduktionen anderer Modelle auf dieses an. Dafür ist es oft nötig, eine Datenstruktur wie den Stack eines Kellerspeicherautomaten oder die Bänder einer Turing-Maschine auf einen Zellularautomaten abzubilden. Martin Kutrib beschreibt in \cite{kutrib08} die Implementierung eines Stacks und einer Queue ohne Zeitverlust. Diese Arbeit baut darauf auf und erweitert sie um eine allgemeine, formale Definition der zwei Datenstrukturen, wodurch beweisbare Aussagen über ihre Eigenschaften geschlossen werden können. Insbesondere wird bewiesen, dass Stacks erst ab einer gewissen Größe der Zustandsmenge ohne Zeitverlust implementiert werden können und damit Kutribs Implementierung in dieser Hinsicht als minimal angesehen werden kann.
+\end{abstract}
+
 \section{Definition}
 
-\begin{figure}
+\begin{figure}[h]
     \centering
     \begin{tikzpicture}[scale=0.5,>=stealth]
         \draw (1,0) grid (5,1);
         \draw (1,0) -- (6,0);
         \draw (1,1) -- (6,1);
-        \foreach \n in {1,...,4} { \node (\n) at (\n+0.5,0.5) {\n}; }
+        \foreach \n in {1,...,4} { \node at (\n+0.5,0.5) {\n}; }
         \node at (5.5,0.5) {\dots};
 
         \node (source) at (-0.5,2.5) { $\Sigma$ };
         \node (sink) at (-0.5,-1.5) { $\Sigma$ };
-        \draw[->,thick] (source) -- node[above] { $\delta_{push}$ } (1);
-        \draw[->,thick] (1) -- node[below] { $\gamma$ } (sink);
+        \draw[->,thick] (source) -- node[right=0.3,above] { $\delta_{push}$ } (1,1);
+        \draw[->,thick] (1,0) -- node[below right] { $\gamma$ } (sink);
     \end{tikzpicture}
     \caption{Schematischer Aufbau und Verhalten einer Datenstruktur}
 \end{figure}
@@ -104,7 +113,7 @@ Analog kann eine Queue-Struktur formal definiert werden.
         \end{tikzpicture}
         \caption{Simulation einer Turing-Maschine durch zwei Stacks}
     \end{figure}
-    Gegeben eine Stack-Implementierung $(Q_S, \delta_S, \delta_{push}, \delta_{pop}, \delta_{nop}, q^S_0)$ ohne Zeitverlust, können wir mit zwei Stacks eine Turing-Maschine $(Q_T, \Sigma, \delta_T, q^T_0, q_f)$ simulieren (das Bandalphabet sei der Einfachheit halber das Eingabealphabet). Dazu speichern wir in Zelle 0  den aktuellen Zustand und das Symbol unter dem Lesekopf und links und rechts davon in je einem der Stacks das linke bzw. rechte Restband. Es ergibt sich $Q := (Q_T \times \Sigma) \cup Q^2_S$ und die Übergangsfunktion für Zelle 0
+    Gegeben eine Stack-Implementierung $(Q_S, \delta_S, \delta_{push}, \delta_{pop}, \delta_{nop}, q^S_0)$ ohne Zeitverlust, können wir mit zwei Stacks eine Turing-Maschine $(Q_T, \Sigma, \delta_T, q^T_0, q_f)$ ohne Zeitverlust simulieren (das Bandalphabet sei der Einfachheit halber das Eingabealphabet). Dazu speichern wir in Zelle 0  den aktuellen Zustand und das Symbol unter dem Lesekopf und links und rechts davon in je einem der Stacks das linke bzw. rechte Restband. Es ergibt sich $Q := (Q_T \times \Sigma) \cup Q^2_S$ und die Übergangsfunktion für Zelle 0
     \[ \delta_0(q_{-1}, (q, a), q_1) :=
     \begin{cases}
         (q', a') &\text{für } \delta_T(q, a) = (q', a', N) \\
@@ -128,7 +137,7 @@ und analog für Zelle -1.
 
 \section{Stack: Implementierungen}
 
-Martin Kutrib beschreibt in [] einen Stack ohne Zeitverlust mit der Zustandsmenge $(\Sigma \cup \{\epsilon\})^3$ mit $q_0 = (\epsilon,\epsilon,\epsilon)$, was er einen \emph{3-Band-Automaten} nennt, die drei Werte des Tupels \emph{Register}.
+Kutribs Stack ohne Zeitverlust in \cite{kutrib08} besitzt die Zustandsmenge $(\Sigma \cup \{\epsilon\})^3$ mit $q_0 = (\epsilon,\epsilon,\epsilon)$, was er einen \emph{3-Band-Automaten} nennt, die drei Werte des Tupels \emph{Register}.
 
 Der Inhalt eines solchen Automaten ist die Konkatenation seiner Zellinhalte:
 \begin{align*}
@@ -166,7 +175,7 @@ Jede Zelle des Automaten versucht, genau zwei ihrer Register gefüllt zu halten 
         \end{center}
 \end{enumerate}
 
-\begin{figure}
+\begin{figure}[h]
     \centering
     \begin{tikzpicture}[every filldraw/.style=lightgray]
         \matrix[row sep=1cm,column sep=1cm] {
@@ -285,8 +294,9 @@ Es verbleiben die Übergangsfunktionen des Stackkopfes. Diese können in diesem 
 wobei $b \in \Sigma$ beliebig ist.
 
 
-\section{Doofer Beweis}
+\section{Beweis}
 
+Ziel dieses Abschnittes ist es zu beweisen, dass Kutribs 3-Band-Stack ohne Zeitverlust tatsächlich einen minimale Zahl von Bändern besitzt. Dazu braucht es aber zu allererst eine allgemeinere Definition von \emph{Bändern}:
 \begin{definition}
     Wir nennen eine Familie von Zellularautomaten $\ca_\Sigma$ \emph{$k$-Band-Automaten}, falls für die jeweilige Zustandsmenge $Q_\Sigma$ gilt:
     \begin{equation}
@@ -305,12 +315,10 @@ Die tatsächliche Form der Zustandsmenge des Automaten kann beliebig weit von $k
     \end{beweis}
 \end{satz}
 
-Dieser Satz sagt allerdings nichts aus über die tatsächliche Speicherung der Inhalte im Zellraum, insbesondere muss ein gepushtes Zeichen $a \in \Sigma$ nicht in dieser Form überhaupt auf einem Band stehen. Um den Inhalt zu inspizieren, muss also auf die externen Operationen zurückgegriffen werden:
+Dieser Satz sagt allerdings nichts aus über die tatsächliche Speicherung der Inhalte im Zellraum, insbesondere muss ein gepushtes Zeichen $a \in \Sigma$ nicht in dieser Form überhaupt auf einem Band stehen. Wir greifen deswegen auf $\Gamma$ zurück und erweitern es:
 
 \begin{definition}
-    Für eine zelluläre Datenstruktur mit einer Operation \emph{pop} ohne Zeitverlust sei in Konfiguration $c$ $\Gamma(c) \subseteq \Sigma^*$ ihr \emph{Inhalt}, also die Buchstabenfolge, die bei wiederholtem Aufruf von \emph{pop} zurückgegeben wird.
-
-    Den Inhalt der ersten $n$ Zellen definieren wir als
+    Für eine zelluläre Datenstruktur definieren wir den Inhalt der ersten $n$ Zellen als
         \[ \Gamma(c,n) := \Gamma(c) \big|_m \]
     wobei $\Gamma(c) \big|_m$ den Präfix von $\Gamma(c)$ der Länge $m$ bezeichnet und $m$ definiert ist als
     \[ m := \max \{m' \in \N \mid \Gamma(c) \big|_{m'} = \Gamma(c') \big|_{m'} \;\forall c' \text{ valide Konfiguration}, c' \big|_n = c \big|_n \} \]
@@ -332,9 +340,9 @@ Dieser Satz sagt allerdings nichts aus über die tatsächliche Speicherung der I
     Für $k$-Band-Automaten gibt es für alle $n \in \N, l > kn$ ein Alphabet $\Sigma$ und ein Wort $w \in \Sigma^l$, nach dessen Pushen gilt:
     \[ \abs{\Gamma(c,n)} \leq kn \]
     \begin{beweis}
-        Angenommen, es gälte für ein $n$ und $l$ und alle Alphabete $\Sigma$ und Konfigurationen $c$ $\abs{\Gamma(c,n)} > kn$, also $\abs{\bild(\Gamma(\cdot,n))} \geq \abs{\Sigma}^{kn+1}$.
+        Angenommen, es gälte für ein $n$ und $l$ und alle Alphabete $\Sigma$ und Konfigurationen $c$ $\abs{\Gamma(c,n)} > kn$, also $\abs{\bild{\Gamma(\cdot,n)}} \geq \abs{\Sigma}^{kn+1}$.
         Es folgt
-        \[ \abs\Sigma^{kn+1} < \abs{\bild(\Gamma(\cdot,n))} \leq \abs{Q^n} \leq (\ceil{c}\abs{\Sigma}^k)^n = \abs{\Sigma}^{kn} \ceil{c}^n \]
+        \[ \abs\Sigma^{kn+1} < \abs{\bild{\Gamma(\cdot,n)}} \leq \abs{Q^n} \leq (\ceil{c}\abs{\Sigma}^k)^n = \abs{\Sigma}^{kn} \ceil{c}^n \]
         also
         \[ kn + 1 \leq kn + n \log_{\abs\Sigma}(\ceil{c}) \]
         Für $\abs{\Sigma}$ groß genug ergibt sich der Widerspruch.
@@ -348,4 +356,10 @@ Dieser Satz sagt allerdings nichts aus über die tatsächliche Speicherung der I
     \end{beweis}
 \end{satz}
 
+\begin{thebibliography}{9}
+
+\bibitem{kutrib08}
+    M. Kutrib: \emph{Cellular Automata – A Computational Point of View}, Studies in Computational Intelligence (SCI) 113, 183–227 (2008)
+
+\end{thebibliography}
 \end{document}
