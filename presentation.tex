@@ -1,0 +1,234 @@
+% vim: spelllang=de_20
+\documentclass{beamer}
+
+\title{Zellularautomaten: Datenstrukturen}
+\author{Sebastian Ullrich}
+\date{Sommersemester 2012}
+
+\usepackage[utf8]{inputenc}
+\usepackage[ngerman]{babel}
+
+\usepackage{amsmath,amsfonts}
+\usepackage{tikz}
+
+\usetikzlibrary{arrows,positioning}
+
+\begin{document}
+
+\begin{frame}
+    \titlepage
+\end{frame}
+
+\begin{frame}
+    \tableofcontents
+\end{frame}
+\section{Motivation}
+\begin{frame}{Was?}
+    \begin{itemize}
+        \item Eindimensionale Zellularautomaten eignen sich wunderbar dafür, lineare Datenstrukturen zu simulieren
+        \item Wir betrachten die einfachsten davon: Stacks und Queues
+            \begin{center}
+                \begin{tikzpicture}[>=stealth]
+                    \matrix[row sep=1cm,midway] {
+                        \useasboundingbox (1,0) rectangle (6,1);
+                        \draw (1,0) grid (5,1);
+                        \draw (1,0) -- (6,0);
+                        \draw (1,1) -- (6,1);
+                        \node at (1.5,0.5) {a};
+                        \node at (2.5,0.5) {b};
+                        \node at (3.5,0.5) {c};
+                        \\
+
+                        \useasboundingbox (1,0) rectangle (6,1);
+                        \useasboundingbox (5,1);
+                        \draw (1,0) grid (5,1);
+                        \draw (1,0) -- (6,0);
+                        \draw (1,1) -- (6,1);
+                        \node at (1.5,0.5) {z};
+                        \node at (2.5,0.5) {a};
+                        \node at (3.5,0.5) {b};
+                        \node at (4.5,0.5) {c};
+                        \draw[->,thick] (0.5,1.5) -- node[sloped,above] { $push$ $z$ } (1,1);
+                        \\
+
+                        \useasboundingbox (1,-1) rectangle (6,1);
+                        \draw (1,0) grid (5,1);
+                        \draw (1,0) -- (6,0);
+                        \draw (1,1) -- (6,1);
+                        \node at (1.5,0.5) {a};
+                        \node at (2.5,0.5) {b};
+                        \node at (3.5,0.5) {c};
+                        \draw[->,thick] (1,0) -- node[sloped,below] { $pop$ } (0.5,-0.5);
+                        \\
+                    };
+                \end{tikzpicture}
+            \end{center}
+        \item Ganz so einfach in der Implementierung dann doch nicht\dots
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Warum?}
+    \begin{itemize}
+        \item Regel 110 ist Turing-vollständig, aber kaum zu überblicken
+        \item Wir bauen uns eine einfachere Turing-Maschine
+            \begin{center}
+                \begin{tikzpicture}[scale=0.5,node distance=2mm]
+                    \draw (-5,0) -- (7,0);
+                    \draw (-5,1) -- (7,1);
+                    \draw (-0.5,0) -- (-0.5,1);
+                    \draw (2.5,0) -- (2.5,1);
+                    \node (1) at (1,0.5) { $Q_T \times \Sigma$ };
+                    \node[left=of 1] { $\leftarrow$ Stack 1 };
+                    \node[right=of 1] { Stack 2 $\rightarrow$ };
+                \end{tikzpicture}
+            \end{center}
+            ($\Rightarrow$ \emph{Zipper}-Datenstruktur)
+        \item Simulierung der Übergangsfunktion:
+            \begin{itemize}
+                \item $\delta(q,a) = (q',a',N)$:
+                    \begin{center}
+                        \begin{tikzpicture}[scale=0.5,node distance=2mm]
+                            \draw (-5,0) -- (7,0);
+                            \draw (-5,1) -- (7,1);
+                            \draw (-0.5,0) -- (-0.5,1);
+                            \draw (2.5,0) -- (2.5,1);
+                            \node (1) at (1,0.5) { $(q',a')$ };
+                            \node[left=of 1] { $nop$ };
+                            \node[right=of 1] { $nop$ };
+                        \end{tikzpicture}
+                    \end{center}
+                \item $\delta(q,a) = (q',a',L)$:
+                    \begin{center}
+                        \begin{tikzpicture}[scale=0.5,node distance=2mm]
+                            \draw (-5,0) -- (7,0);
+                            \draw (-5,1) -- (7,1);
+                            \draw (-0.5,0) -- (-0.5,1);
+                            \draw (2.5,0) -- (2.5,1);
+                            \node (1) at (1,0.5) { $(q',a_L)$ };
+                            \node[left=of 1] { $a_L := pop$ };
+                            \node[right=of 1] { $push$ $a'$ };
+                        \end{tikzpicture}
+                    \end{center}
+                \item $\delta(q,a) = (q',a',R)$:
+                    \begin{center}
+                        \begin{tikzpicture}[scale=0.5,node distance=2mm]
+                            \draw (-5,0) -- (7,0);
+                            \draw (-5,1) -- (7,1);
+                            \draw (-0.5,0) -- (-0.5,1);
+                            \draw (2.5,0) -- (2.5,1);
+                            \node (1) at (1,0.5) { $(q',a_R)$ };
+                            \node[left=of 1] { $push$ $a'$ };
+                            \node[right=of 1] { $a_R := pop$ };
+                        \end{tikzpicture}
+                    \end{center}
+            \end{itemize}
+        \item (Demo)
+    \end{itemize}
+\end{frame}
+
+\section{Implementierung eines Stacks ohne Zeitverlust}
+\begin{frame}[fragile]{Wie?}
+    \begin{itemize}
+        \item Hintereinander aufgereiht können die Symbole augenscheinlich nicht schnell genug aus dem Stack herausgeholt werden
+
+            $\Rightarrow$ Wir speichern mehrere Symbole in einer Zelle
+    \begin{tikzpicture}[every filldraw/.style=lightgray]
+        \matrix[row sep=1cm,column sep=1cm] {
+            \draw[scale=0.4] (1) (0,0) grid (4,3);
+            \begin{scope}[scale=0.4,xshift=12,yshift=12]
+                \node[anchor=east] at (-1,1) { $nop$ };
+                \node at (0,2) {a};
+                \node at (0,1) {b};
+                \node at (1,2) {c};
+                \node at (1,1) {d};
+            \end{scope}
+            &
+
+
+            \filldraw[scale=0.4,lightgray] (0,2) rectangle (1,1);
+            \draw[scale=0.4] (1) (0,0) grid (4,3);
+            \begin{scope}[scale=0.4,xshift=12,yshift=12]
+                \node[anchor=east] at (-1,1) { $pop$ };
+                \node at (0,2) {b};
+                \node at (1,2) {c};
+                \node at (1,1) {d};
+            \end{scope}
+            \\
+
+            \filldraw[scale=0.4,lightgray] (1,2) rectangle (2,1);
+            \draw[scale=0.4] (1) (0,0) grid (4,3);
+            \begin{scope}[scale=0.4,xshift=12,yshift=12]
+                \node[anchor=east] at (-1,1) { $nop$ };
+                \node at (0,2) {b};
+                \node at (0,1) {c};
+                \node at (1,2) {d};
+            \end{scope}
+            &
+
+            \filldraw[scale=0.4,lightgray] (0,2) rectangle (1,3);
+            \draw[scale=0.4] (1) (0,0) grid (4,3);
+            \begin{scope}[scale=0.4,xshift=12,yshift=12]
+                \node[anchor=east] at (-1,1) { $push$ $a$ };
+                \node at (0,2) {a};
+                \node at (0,1) {b};
+                \node at (0,0) {c};
+                \node at (1,2) {d};
+            \end{scope}
+            \\
+
+            \filldraw[scale=0.4,lightgray] (0,2) rectangle (2,3);
+            \draw[scale=0.4] (1) (0,0) grid (4,3);
+            \begin{scope}[scale=0.4,xshift=12,yshift=12]
+                \node[anchor=east] at (-1,1) { $pop$ };
+                \node at (0,2) {b};
+                \node at (1,2) {c};
+                \node at (1,1) {d};
+            \end{scope}
+            &
+
+            \filldraw[scale=0.4,lightgray] (1,1) rectangle (2,2);
+            \draw[scale=0.4] (1) (0,0) grid (4,3);
+            \begin{scope}[scale=0.4,xshift=12,yshift=12]
+                \node[anchor=east] at (-1,1) { $nop$ };
+                \node at (0,2) {b};
+                \node at (0,1) {c};
+                \node at (1,2) {d};
+            \end{scope}
+            \\
+        };
+    \end{tikzpicture}
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Wie? - formalisiert}
+    \begin{itemize}
+        \item Der Stack besteht aus drei \emph{Bändern}, jede Zelle aus drei \emph{Registern}
+        \item Wir wollen jeweils die ersten zwei Register gefüllt halten
+    \item Eine Zelle mit drei vollen Registern gibt den Inhalt ihres dritten Registers an ihren rechten Nachbarn ab, der ihn seinen Registern voranstellt
+        \begin{center}
+            \begin{tikzpicture}[scale=0.4,>=stealth]
+                \filldraw[lightgray] (0,3) rectangle (1,0);
+                \filldraw[lightgray] (1,3) rectangle (2,1);
+                \draw (0,0) grid (2,3);
+                \begin{scope}[shorten >=0.5mm]
+                    \draw[->,thick] (0.5,0.5) -- (1.5,2.5);
+                    \draw[->,darkgray] (1.5,2.5) -- (1.5,1.5);
+                    \draw[->,darkgray] (1.5,1.5) -- (1.5,0.5);
+                \end{scope}
+            \end{tikzpicture}
+        \end{center}
+    \item Eine Zelle mit weniger als zwei vollen Registern stiehlt das erste Register ihres rechten Nachbarn
+        \begin{center}
+            \begin{tikzpicture}[scale=0.4,>=stealth]
+                \filldraw[lightgray] (0,3) rectangle (1,2);
+                \filldraw[lightgray] (1,3) rectangle (2,1);
+                \draw (0,0) grid (2,3);
+                \begin{scope}[shorten >=0.5mm]
+                    \draw[->,thick] (1.5,2.5) -- (0.5,1.5);
+                    \draw[->,darkgray] (1.5,1.5) -- (1.5,2.5);
+                \end{scope}
+            \end{tikzpicture}
+        \end{center}
+    \end{itemize}
+\end{frame}
+\end{document}
