@@ -25,13 +25,13 @@
 \newcommand{\N}{\mathbb{N}}
 \newcommand{\ve}[3]{\begin{pmatrix}#1\\#2\\#3\end{pmatrix}}
 
-\newcommand{\pop}{\ensuremath\mathit{pop}}
-\newcommand{\popZiel}{\ensuremath\mathit{popZiel}}
-\newcommand{\popQuelle}{\ensuremath\mathit{popQuelle}}
-\newcommand{\nop}{\ensuremath\mathit{nop}}
-\newcommand{\push}{\ensuremath\mathit{push}}
-\newcommand{\pushZiel}{\ensuremath\mathit{pushZiel}}
-\newcommand{\pushQuelle}{\ensuremath\mathit{pushQuelle}}
+\newcommand{\pop}{\ensuremath{\mathit{pop}}}
+\newcommand{\popZiel}{\ensuremath{\mathit{popZiel}}}
+\newcommand{\popQuelle}{\ensuremath{\mathit{popQuelle}}}
+\newcommand{\nop}{\ensuremath{\mathit{nop}}}
+\newcommand{\push}{\ensuremath{\mathit{push}}}
+\newcommand{\pushZiel}{\ensuremath{\mathit{pushZiel}}}
+\newcommand{\pushQuelle}{\ensuremath{\mathit{pushQuelle}}}
 
 \maketitle
 \newpage
@@ -53,17 +53,17 @@
 
         \node (source) at (-0.5,2.5) { $\Sigma$ };
         \node (sink) at (-0.5,-1.5) { $\Sigma$ };
-        \draw[->,thick] (source) -- node[right=0.3,above] { $\delta_{push}$ } (1,1);
+        \draw[->,thick] (source) -- node[right=0.3,above] { $\delta_{\push}$ } (1,1);
         \draw[->,thick] (1,0) -- node[below right] { $\gamma$ } (sink);
     \end{tikzpicture}
     \caption{Schematischer Aufbau und Verhalten einer Datenstruktur}
 \end{figure}
 Wir betrachten Datenstrukturen mit Von-Neumann-Nachbarschaft von Radius 1 auf dem Gitter $R = \N$, das wir als nach rechts offenes Band darstellen. Für Zellen ab Position 2 existiert also eine Übergangsfunktion $\delta : Q^3 \rightarrow Q$, die den neuen Zustand einer Zelle in Abhängigkeit des Zustands ihres linken Nachbarn, der Zelle selbst und ihres rechten Nachbarn bestimmt.
 
-Die erste Zelle dagegen besitzt keinen linken Nachbarn, kann allerdings Befehle von außerhalb des Automaten (bildlich "`von links"') entgegennehmen, welche wir bei den betrachteten Datenstrukturen Stack und Queue beide Male \emph{push} und \emph{pop} nennen wollen. Zusammen mit einer Operation \emph{nop}, der Nulloperation, können wir damit das Verhalten der ersten Zelle und gleichzeitig das von außen sichtbare Verhalten der ganzen Datenstruktur durch drei Übergangsfunktionen
+Die erste Zelle dagegen besitzt keinen linken Nachbarn, kann allerdings Befehle von außerhalb des Automaten (bildlich "`von links"') entgegennehmen, welche wir bei den betrachteten Datenstrukturen Stack und Queue beide Male \push und \pop nennen wollen. Zusammen mit einer Operation \nop, der Nulloperation, können wir damit das Verhalten der ersten Zelle und gleichzeitig das von außen sichtbare Verhalten der ganzen Datenstruktur durch drei Übergangsfunktionen
 \begin{align*}
-    \delta_{push} &: \Sigma \times Q^2 \rightarrow Q \\
-    \delta_{pop}, \delta_{nop} &: Q^2 \rightarrow Q
+    \delta_{\push} &: \Sigma \times Q^2 \rightarrow Q \\
+    \delta_{\pop}, \delta_{\nop} &: Q^2 \rightarrow Q
 \end{align*}
 und eine \emph{Inhaltsfunktion}
 \[ \gamma : Q \rightarrow \Sigma \cup {\epsilon} \]
@@ -71,38 +71,38 @@ die das oberste Symbol oder $\epsilon$ bei einer leeren Struktur zurückgibt, be
 
 Auf Basis der vier $\delta$ seien entsprechend noch definiert
 \begin{align*}
-    \Delta_{push} &: \Sigma \times Q^\N \rightarrow Q^\N \\
-    \Delta_{pop} &: Q^\N \rightarrow (\Sigma \cup \{\epsilon\}) \times Q^\N \\
-    \Delta_{nop} &: Q^\N \rightarrow Q^\N
+    \Delta_{\push} &: \Sigma \times Q^\N \rightarrow Q^\N \\
+    \Delta_{\pop} &: Q^\N \rightarrow (\Sigma \cup \{\epsilon\}) \times Q^\N \\
+    \Delta_{\nop} &: Q^\N \rightarrow Q^\N
 \end{align*}
 Da wir aber auch Datenstrukturen betrachten wollen, die mit Zeitverlust agieren, definieren wir noch
 \begin{align*}
-    \Delta^*_{push} &: \Sigma \times Q^\N \rightarrow Q^\N,& (a,c) &\mapsto \Delta_{push}(a,\Delta^i_{nop}(c)) \\
-    \Delta^*_{pop} &: Q^\N \rightarrow (\Sigma \cup \{\epsilon\}) \times Q^\N,& c &\mapsto \Delta_{pop}(\Delta^i_{nop}(c))
+    \Delta^*_{\push} &: \Sigma \times Q^\N \rightarrow Q^\N,& (a,c) &\mapsto \Delta_{\push}(a,\Delta^i_{\nop}(c)) \\
+    \Delta^*_{\pop} &: Q^\N \rightarrow (\Sigma \cup \{\epsilon\}) \times Q^\N,& c &\mapsto \Delta_{\pop}(\Delta^i_{\nop}(c))
 \end{align*}
 Die Zahl $i$ der notwendigen Nulloperationen vor der eigentlichen Operation ist dabei von der Implementierung der Datenstruktur, möglicherweise sogar von der Konfiguration $c$ abhängig.
 
 Natürlich wollen wir noch Bedingungen an das Verhalten einer Datenstruktur stellen. Dazu müssen wir aber Aussagen über den \emph{Inhalt} der Datenstruktur machen können:
 \begin{definition}
-    Für eine globale Konfiguration $c \in Q^\N$ sei $\Gamma(c) \in \Sigma^*$ die Folge von Zeichen, die bei wiederholtem Aufruf von \emph{pop} zurückgegeben werden:
+    Für eine globale Konfiguration $c \in Q^\N$ sei $\Gamma(c) \in \Sigma^*$ die Folge von Zeichen, die bei wiederholtem Aufruf von \pop zurückgegeben werden:
     \[ \Gamma(c) := \begin{cases}
-            \epsilon &\text{falls } \Delta^*_{pop}(c) \in \{\epsilon\} \times Q^\N \\
-        a \cdot \Gamma(c') &\text{falls }\Delta^*_{pop}(c)=:(a,c') \in \Sigma \times Q^\N
+            \epsilon &\text{falls } \Delta^*_{\pop}(c) \in \{\epsilon\} \times Q^\N \\
+        a \cdot \Gamma(c') &\text{falls }\Delta^*_{\pop}(c)=:(a,c') \in \Sigma \times Q^\N
     \end{cases} \]
 \end{definition}
 
 Nun lassen sich die erwarteten Eigenschaften einer Implementierung endlich formal definieren:
 \begin{definition}
-    Wir nennen einen Zellularautomaten $(Q, \delta, \delta_{push}, \delta_{pop}, \delta_{nop}, q_0)$ einen Stack, falls er folgende Axiome erfüllt:
+    Wir nennen einen Zellularautomaten $(Q, \delta, \delta_{\push}, \delta_{\pop}, \delta_{\nop}, q_0)$ einen Stack, falls er folgende Axiome erfüllt:
 
     Für jede \emph{valide} Konfiguration $c$, also eine aus $c_0 \equiv q_0$ durch beliebig wiederholte Anwendung der drei $\Delta$ ableitbare Konfiguration, muss gelten:
     \begin{enumerate}
-        \item $\forall a \in \Sigma: \Gamma(\Delta^*_{push}(a,c)) = a \cdot \Gamma(c)$
-        \item $\forall a \in \Sigma, w \in \Sigma^*: \left[ \Gamma(c) = a \cdot w \Rightarrow \Delta^*_{pop}(c) = (a,c'), \Gamma(c') = w \right]$
-        \item $\Gamma(c) = \epsilon \Rightarrow \Delta^*_{pop}(c) = (\epsilon,c'), \Gamma(c') = \epsilon$
-        \item $\Gamma(\Delta_{nop}(c)) = \Gamma(c)$
+        \item $\forall a \in \Sigma: \Gamma(\Delta^*_{\push}(a,c)) = a \cdot \Gamma(c)$
+        \item $\forall a \in \Sigma, w \in \Sigma^*: \left[ \Gamma(c) = a \cdot w \Rightarrow \Delta^*_{\pop}(c) = (a,c'), \Gamma(c') = w \right]$
+        \item $\Gamma(c) = \epsilon \Rightarrow \Delta^*_{\pop}(c) = (\epsilon,c'), \Gamma(c') = \epsilon$
+        \item $\Gamma(\Delta_{\nop}(c)) = \Gamma(c)$
     \end{enumerate}
-    Insbesondere arbeitet der Stack \emph{ohne Zeitverlust}, falls die Axiome schon durch $\Delta_{push}$ und $\Delta_{pop}$ erfüllt werden.
+    Insbesondere arbeitet der Stack \emph{ohne Zeitverlust}, falls die Axiome schon durch $\Delta_{\push}$ und $\Delta_{\pop}$ erfüllt werden.
 \end{definition}
 
 Analog kann eine Queue-Struktur formal definiert werden.
@@ -121,7 +121,7 @@ Analog kann eine Queue-Struktur formal definiert werden.
         \end{tikzpicture}
         \caption{Simulation einer Turing-Maschine durch zwei Stacks}
     \end{figure}
-    Gegeben eine Stack-Implementierung $(Q_S, \delta_S, \delta_{push}, \delta_{pop}, \delta_{nop}, q^S_0)$ ohne Zeitverlust, können wir mit zwei Stacks eine Turing-Maschine $(Q_T, \Sigma, \delta_T, q^T_0, q_f)$ ohne Zeitverlust simulieren (das Bandalphabet sei der Einfachheit halber das Eingabealphabet). Dazu speichern wir in Zelle 0  den aktuellen Zustand und das Symbol unter dem Lesekopf und links und rechts davon in je einem der Stacks das linke bzw. rechte Restband. Es ergibt sich $Q := (Q_T \times \Sigma) \cup Q^2_S$ und die Übergangsfunktion für Zelle 0
+    Gegeben eine Stack-Implementierung $(Q_S, \delta_S, \delta_{\push}, \delta_{\pop}, \delta_{\nop}, q^S_0)$ ohne Zeitverlust, können wir mit zwei Stacks eine Turing-Maschine $(Q_T, \Sigma, \delta_T, q^T_0, q_f)$ ohne Zeitverlust simulieren (das Bandalphabet sei der Einfachheit halber das Eingabealphabet). Dazu speichern wir in Zelle 0  den aktuellen Zustand und das Symbol unter dem Lesekopf und links und rechts davon in je einem der Stacks das linke bzw. rechte Restband. Es ergibt sich $Q := (Q_T \times \Sigma) \cup Q^2_S$ und die Übergangsfunktion für Zelle 0
     \[ \delta_0(q_{-1}, (q, a), q_1) :=
     \begin{cases}
         (q', a') &\text{für } \delta_T(q, a) = (q', a', N) \\
@@ -136,9 +136,9 @@ mit
 und Zelle 1
     \[ \delta_1((q, a), q_1, q_2) :=
     \begin{cases}
-        \delta_{nop}(q_1, q_2) &\text{für } \delta_T(q, a) = (q', a', N) \\
-        \delta_{push}(a', q_1, q_2) &\text{für } \delta_T(q, a) = (q', a', L) \\
-        \delta_{pop}(q_1, q_2) &\text{für } \delta_T(q, a) = (q', a', R) \\
+        \delta_{\nop}(q_1, q_2) &\text{für } \delta_T(q, a) = (q', a', N) \\
+        \delta_{\push}(a', q_1, q_2) &\text{für } \delta_T(q, a) = (q', a', L) \\
+        \delta_{\pop}(q_1, q_2) &\text{für } \delta_T(q, a) = (q', a', R) \\
     \end{cases} \]
 und analog für Zelle -1.
 \end{beispiel}
@@ -191,7 +191,7 @@ Jede Zelle des Automaten versucht, genau zwei ihrer Register gefüllt zu halten 
         \matrix (mym) [row sep=1cm,column sep=1cm] {
             \draw[scale=0.4] (1) (0,0) grid (4,3);
             \begin{scope}[scale=0.4,xshift=12,yshift=5]
-                \node[anchor=east,yshift=3] at (-1,1) { 1. $nop$ };
+                \node[anchor=east,yshift=3] at (-1,1) { 1. \nop };
                 \node at (0,2) {a};
                 \node at (0,1) {b};
                 \node at (1,2) {c};
@@ -203,7 +203,7 @@ Jede Zelle des Automaten versucht, genau zwei ihrer Register gefüllt zu halten 
             \filldraw[scale=0.4,lightgray] (0,2) rectangle (1,1);
             \draw[scale=0.4] (1) (0,0) grid (4,3);
             \begin{scope}[scale=0.4,xshift=12,yshift=5]
-                \node[anchor=east,yshift=3] at (-1,1) { 2. $pop$ };
+                \node[anchor=east,yshift=3] at (-1,1) { 2. \pop };
                 \node at (0,2) {b};
                 \node at (1,2) {c};
                 \node at (1,1) {d};
@@ -213,7 +213,7 @@ Jede Zelle des Automaten versucht, genau zwei ihrer Register gefüllt zu halten 
             \filldraw[scale=0.4,lightgray] (1,2) rectangle (2,1);
             \draw[scale=0.4] (1) (0,0) grid (4,3);
             \begin{scope}[scale=0.4,xshift=12,yshift=5]
-                \node[anchor=east,yshift=3] at (-1,1) { 3. $nop$ };
+                \node[anchor=east,yshift=3] at (-1,1) { 3. \nop };
                 \node at (0,2) {b};
                 \node at (0,1) {c};
                 \node at (1,2) {d};
@@ -223,7 +223,7 @@ Jede Zelle des Automaten versucht, genau zwei ihrer Register gefüllt zu halten 
             \filldraw[scale=0.4,lightgray] (0,2) rectangle (1,3);
             \draw[scale=0.4] (1) (0,0) grid (4,3);
             \begin{scope}[scale=0.4,xshift=12,yshift=5]
-                \node[anchor=east,yshift=3] at (-1,1) { 4. $push$ $a$ };
+                \node[anchor=east,yshift=3] at (-1,1) { 4. \push $a$ };
                 \node at (0,2) {a};
                 \node at (0,1) {b};
                 \node at (0,0) {c};
@@ -234,7 +234,7 @@ Jede Zelle des Automaten versucht, genau zwei ihrer Register gefüllt zu halten 
             \filldraw[scale=0.4,lightgray] (0,1) rectangle (2,2);
             \draw[scale=0.4] (1) (0,0) grid (4,3);
             \begin{scope}[scale=0.4,xshift=12,yshift=5]
-                \node[anchor=east,yshift=3] at (-1,1) { 5. $pop$ };
+                \node[anchor=east,yshift=3] at (-1,1) { 5. \pop };
                 \node at (0,2) {b};
                 \node at (1,2) {c};
                 \node at (1,1) {d};
@@ -244,7 +244,7 @@ Jede Zelle des Automaten versucht, genau zwei ihrer Register gefüllt zu halten 
             \filldraw[scale=0.4,lightgray] (1,1) rectangle (2,2);
             \draw[scale=0.4] (1) (0,0) grid (4,3);
             \begin{scope}[scale=0.4,xshift=12,yshift=5]
-                \node[anchor=east,yshift=3] at (-1,1) { 6. $nop$ };
+                \node[anchor=east,yshift=3] at (-1,1) { 6. \nop };
                 \node at (0,2) {b};
                 \node at (0,1) {c};
                 \node at (1,2) {d};
@@ -256,11 +256,11 @@ Jede Zelle des Automaten versucht, genau zwei ihrer Register gefüllt zu halten 
 \end{figure}
 Betrachten wir beide Regeln jeweils aus Sicht der \emph{Quell-} und \emph{Zielzelle}, ergeben sich die vier Übergangsfunktionen
 \begin{align*}
-    \delta_{pushQuelle}(q_1,\ve{r_1}{r_2}{r_3},q_3) &= \ve{r_1}{r_2}{\epsilon} \\
-    %\delta_{pushQuelle}(q_1,q_2,q_3) &= (q_{21}, q_{22}, \epsilon) \\
-    \delta_{pushZiel}(\ve{r_1}{r_2}{r_3},\ve{s_1}{s_2}{s_3},q_3) &= \ve{r_3}{s_1}{s_2} \text{ falls } r_3 \in \Sigma \\
-    \delta_{popQuelle}(\ve{r_1}{\epsilon}{\epsilon},\ve{s_1}{s_2}{s_3},q_3) &= \ve{s_2}{s_3}{\epsilon} \text { falls } s_1 \in \Sigma \\
-    \delta_{popZiel}(q_1,\ve{r_1}{\epsilon}{\epsilon},\ve{s_1}{s_2}{s_3}) &= \begin{cases}
+    \delta_{\pushQuelle}(q_1,\ve{r_1}{r_2}{r_3},q_3) &= \ve{r_1}{r_2}{\epsilon} \\
+    %\delta_{\pushQuelle}(q_1,q_2,q_3) &= (q_{21}, q_{22}, \epsilon) \\
+    \delta_{\pushZiel}(\ve{r_1}{r_2}{r_3},\ve{s_1}{s_2}{s_3},q_3) &= \ve{r_3}{s_1}{s_2} \text{ falls } r_3 \in \Sigma \\
+    \delta_{\popQuelle}(\ve{r_1}{\epsilon}{\epsilon},\ve{s_1}{s_2}{s_3},q_3) &= \ve{s_2}{s_3}{\epsilon} \text { falls } s_1 \in \Sigma \\
+    \delta_{\popZiel}(q_1,\ve{r_1}{\epsilon}{\epsilon},\ve{s_1}{s_2}{s_3}) &= \begin{cases}
         \ve{r_1}{s_1}{\epsilon} &\text { falls } s_1,r_1 \in \Sigma \\
         \ve{s_1}{\epsilon}{\epsilon} &\text { falls } r_1 \in \Sigma, r_1 = \epsilon
     \end{cases}
@@ -274,32 +274,32 @@ Da in einem Zeitschritt gegebenenfalls mehrere Fälle auf die gleiche Zelle zutr
 \end{align*}
 Schwieriger ist dagegen die Festlegung der Reihenfolge. Es ergeben sich folgende Einschränkungen:
 \begin{enumerate}
-    \item $pushZiel \leftarrow pushQuelle$: Wurde gerade ein Zeichen in die Zelle gepusht und dadurch alle Register gefüllt, darf $pushQuelle$ das letzte Register nicht im gleichen Zeitschritt wieder leeren.
-    \item $popQuelle \leftarrow popZiel$: Wurde durch $popQuelle$ die Zahl der gefüllten Zellen von zwei auf eine verringert, darf $popZiel$ im gleichen Zeitschritt nicht schon ein Zeichen von rechts übernehmen, da für den rechten Nachbarn die Zelle noch nicht unterfüllt erscheint.
-    \item $popQuelle \leftarrow pushQuelle$: Sieht der rechte Nachbar eine voll gefüllte Zelle und wird das dritte Register übernehmen, darf $pushQuelle$ dessen Inhalt nicht ins zweite Register schieben.
-    \item $pushZiel \leftarrow popZiel$: Sieht der rechte Nachbar, dass nur eine Zelle gefüllt ist, und wird sein erstes Register löschen, muss $popZiel$ dieses übernehmen, bevor $pushZiel$ die Zahl der gefüllten Register ggf. auf 2 erhöht.
+    \item $\pushZiel \leftarrow \pushQuelle$: Wurde gerade ein Zeichen in die Zelle gepusht und dadurch alle Register gefüllt, darf \pushQuelle das letzte Register nicht im gleichen Zeitschritt wieder leeren.
+    \item $\popQuelle \leftarrow \popZiel$: Wurde durch \popQuelle die Zahl der gefüllten Zellen von zwei auf eine verringert, darf \popZiel im gleichen Zeitschritt nicht schon ein Zeichen von rechts übernehmen, da für den rechten Nachbarn die Zelle noch nicht unterfüllt erscheint.
+    \item $\popQuelle \leftarrow \pushQuelle$: Sieht der rechte Nachbar eine voll gefüllte Zelle und wird das dritte Register übernehmen, darf \pushQuelle dessen Inhalt nicht ins zweite Register schieben.
+    \item $\pushZiel \leftarrow \popZiel$: Sieht der rechte Nachbar, dass nur eine Zelle gefüllt ist, und wird sein erstes Register löschen, muss \popZiel dieses übernehmen, bevor \pushZiel die Zahl der gefüllten Register ggf. auf 2 erhöht.
 \end{enumerate}
 
 \begin{figure}[h]
     \centering
     \begin{tikzpicture}[>=stealth]
-        \node (pushZiel) { $pushZiel$ };
-        \node (popQuelle) [below=of pushZiel] { $popQuelle$ };
-        \node (pushQuelle) [right=of pushZiel] { $pushQuelle$ };
-        \node (popZiel) [right=of popQuelle] { $popZiel$ };
+        \node (pushZiel) { \pushZiel };
+        \node (popQuelle) [below=of pushZiel] { \popQuelle };
+        \node (pushQuelle) [right=of pushZiel] { \pushQuelle };
+        \node (popZiel) [right=of popQuelle] { \popZiel };
         \draw[->] (pushQuelle) edge (pushZiel) edge (popQuelle)
                   (popZiel) edge (pushZiel) edge (popQuelle);
     \end{tikzpicture}
     \caption{Abhängigkeitsdiagramm der vier Übergangsfunktionen}
 \end{figure}
 Damit ergibt sich als eine von vier Möglichkeiten beispielhaft
-    \[ \delta := \delta_{pushZiel} \circ \delta_{popQuelle} \circ \delta_{popZiel} \circ \delta_{pushQuelle} \]
+    \[ \delta := \delta_{\pushZiel} \circ \delta_{\popQuelle} \circ \delta_{\popZiel} \circ \delta_{\pushQuelle} \]
 
 Es verbleiben die Übergangsfunktionen des Stackkopfes. Diese können in diesem Fall allerdings leicht aus $\delta$ abgeleitet werden, indem die jeweilige Operation als virtuelle Zelle links vom Kopf betrachtet wird:
 \begin{align*}
-    \delta_{push}(a, q_1, q_2) &:= \delta(\ve{b}{b}{a}, q_1, q_2) \\
-    \delta_{pop}(q_1, q_2) &:= \delta(\ve{\epsilon}{\epsilon}{\epsilon}, q_1, q_2) \\
-    \delta_{nop}(q_1, q_2) &:= \delta(\ve{b}{b}{\epsilon}, q_1, q_2) \\
+    \delta_{\push}(a, q_1, q_2) &:= \delta(\ve{b}{b}{a}, q_1, q_2) \\
+    \delta_{\pop}(q_1, q_2) &:= \delta(\ve{\epsilon}{\epsilon}{\epsilon}, q_1, q_2) \\
+    \delta_{\nop}(q_1, q_2) &:= \delta(\ve{b}{b}{\epsilon}, q_1, q_2) \\
 \end{align*}
 wobei $b \in \Sigma$ beliebig ist.
 
@@ -330,14 +330,14 @@ Exakt analog kann auch ein Stack mit nur zwei Bändern entworfen werden. Dieser 
             \end{tikzpicture}
         \end{center}
 \end{enumerate}
-Da die Symbole im Ruhezustand nun allerdings linear im ersten Band angeordnet sind, kann die \emph{pop}-Operation nicht mehr ohne Zeitverlust bedient werden: $\Delta^*_{\pop}=\Delta_{pop} \circ \Delta_{\nop}$.
+Da die Symbole im Ruhezustand nun allerdings linear im ersten Band angeordnet sind, kann die \pop-Operation nicht mehr ohne Zeitverlust bedient werden: $\Delta^*_{\pop}=\Delta_{\pop} \circ \Delta_{\nop}$.
 \begin{figure}[h]
     \centering
     \begin{tikzpicture}[every node/.style={anchor=base}]
         \matrix [row sep=1cm,column sep=1cm] {
             \draw[scale=0.4] (0,0) grid (4,2);
             \begin{scope}[scale=0.4,xshift=12,yshift=5]
-                \node[anchor=east,yshift=4] at (-1,0.5) { 1. $nop$ };
+                \node[anchor=east,yshift=4] at (-1,0.5) { 1. \nop };
                 \node at (0,1) {a};
                 \node at (1,1) {b};
                 \node at (2,1) {c};
@@ -348,7 +348,7 @@ Da die Symbole im Ruhezustand nun allerdings linear im ersten Band angeordnet si
             \filldraw[scale=0.4,lightgray] (0,2) rectangle (1,1);
             \draw[scale=0.4] (0,0) grid (4,2);
             \begin{scope}[scale=0.4,xshift=12,yshift=5]
-                \node[anchor=east,yshift=4] at (-1,0.5) { 2. $pop$ };
+                \node[anchor=east,yshift=4] at (-1,0.5) { 2. \pop };
                 \node at (1,1) {b};
                 \node at (2,1) {c};
             \end{scope}
@@ -357,7 +357,7 @@ Da die Symbole im Ruhezustand nun allerdings linear im ersten Band angeordnet si
             \filldraw[scale=0.4,lightgray] (1,2) rectangle (2,1);
             \draw[scale=0.4] (0,0) grid (4,2);
             \begin{scope}[scale=0.4,xshift=12,yshift=5]
-                \node[anchor=east,yshift=4] at (-1,0.5) { 3. $nop$ };
+                \node[anchor=east,yshift=4] at (-1,0.5) { 3. \nop };
                 \node at (0,1) {b};
                 \node at (2,1) {c};
             \end{scope}
@@ -367,7 +367,7 @@ Da die Symbole im Ruhezustand nun allerdings linear im ersten Band angeordnet si
             \filldraw[scale=0.4,lightgray] (2,2) rectangle (3,1);
             \draw[scale=0.4] (0,0) grid (4,2);
             \begin{scope}[scale=0.4,xshift=12,yshift=5]
-                \node[anchor=east,yshift=4] at (-1,0.5) { 4. $pop$ };
+                \node[anchor=east,yshift=4] at (-1,0.5) { 4. \pop };
                 \node at (1,1) {c};
             \end{scope}
             \\
@@ -434,7 +434,7 @@ Dieser Satz sagt allerdings nichts aus über die tatsächliche Speicherung der I
 \end{satz}
 
 \begin{satz}
-    Es gibt keinen 2-Band-Automaton mit \emph{pop}-Operation ohne Zeitverlust.
+    Es gibt keinen 2-Band-Automaton mit \pop-Operation ohne Zeitverlust.
     \begin{beweis}
         Wähle $w \in \Sigma^{2n+1}$ nach \thref{cor:spacesize}. Nach Pushen von $w \big|_{2n-3}$ gibt es nach \thref{thm:locontent} $t_0$, sodass $\abs{\Gamma(c,n)} \geq 2n-3$. Pushe dann die letzten vier Buchstaben und es gilt, da $c(n+1)$ nicht beeinflusst worden sein kann, $\abs{\Gamma(c,n)} \geq 2n+1$, im Widerspruch zu \thref{cor:spacesize}.
     \end{beweis}
