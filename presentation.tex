@@ -241,4 +241,126 @@
         \end{center}
     \end{itemize}
 \end{frame}
+
+\begin{frame}[t]{Wie? - noch exakter}
+    \begin{itemize}
+        \item Drei Bänder $\Rightarrow Q = (\Sigma \cup \{\epsilon\})^3$
+        \item Umsetzung der Regeln - jeweils aus Sicht der Quell- und der Zielzelle:
+            \only<1>{
+                \begin{columns}
+                    \column{0cm}
+                    \begin{tikzpicture}[scale=0.4,>=stealth]
+                        \filldraw[lightgray] (0,3) rectangle (1,0);
+                        \filldraw[lightgray] (1,3) rectangle (2,1);
+                        \draw (0,0) grid (2,3);
+                        \begin{scope}[shorten >=0.5mm]
+                            \draw[->,thick] (0.5,0.5) -- (1.5,2.5);
+                            \draw[->,darkgray] (1.5,2.5) -- (1.5,1.5);
+                            \draw[->,darkgray] (1.5,1.5) -- (1.5,0.5);
+                        \end{scope}
+                    \end{tikzpicture}
+                    \column{0cm}
+                    \begin{align*}
+                        \delta_{\pushQuelle}(q_1,\ve{r_1}{r_2}{r_3},q_3) &= \ve{r_1}{r_2}{\epsilon} \\
+    %\delta_{\pushQuelle}(q_1,q_2,q_3) &= (q_{21}, q_{22}, \epsilon) \\
+                        \delta_{\pushZiel}(\ve{r_1}{r_2}{r_3},\ve{s_1}{s_2}{s_3},q_3) &= \ve{r_3}{s_1}{s_2} \text{ falls } r_3 \in \Sigma
+                    \end{align*}
+                \end{columns}
+            }
+                \only<2>{
+\begin{columns}
+    \column{0cm}
+            \begin{tikzpicture}[scale=0.4,>=stealth]
+                \filldraw[lightgray] (0,3) rectangle (1,2);
+                \filldraw[lightgray] (1,3) rectangle (2,1);
+                \draw (0,0) grid (2,3);
+                \begin{scope}[shorten >=0.5mm]
+                    \draw[->,thick] (1.5,2.5) -- (0.5,1.5);
+                    \draw[->,darkgray] (1.5,1.5) -- (1.5,2.5);
+                \end{scope}
+            \end{tikzpicture}
+            \column{0cm}
+            \begin{align*}
+    \delta_{\popQuelle}(\ve{r_1}{\epsilon}{\epsilon},\ve{s_1}{s_2}{s_3},q_3) &= \ve{s_2}{s_3}{\epsilon} \text { falls } s_1 \in \Sigma \\
+    \delta_{\popZiel}(q_1,\ve{r_1}{\epsilon}{\epsilon},\ve{s_1}{s_2}{s_3}) &= \begin{cases}
+        \ve{r_1}{s_1}{\epsilon} &\text { falls } s_1,r_1 \in \Sigma \\
+        \ve{s_1}{\epsilon}{\epsilon} &\text { falls } r_1 \in \Sigma, r_1 = \epsilon
+    \end{cases}
+\end{align*}
+\end{columns}
+}
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Wie? - noch exakter}
+    \begin{itemize}
+        \item Pro Zelle können mehrere Regeln sowohl als Quell- als auch als Zielzelle gleichzeitig angewendet werden müssen $\Rightarrow$ komponiere sie in eine Überführungsfunktion:
+\begin{align*}
+    \circ : Q^{Q \times Q \times Q} \times Q^{Q \times Q \times Q} &\rightarrow Q^{Q \times Q \times Q} \\
+    (\delta_1 \circ \delta_2)(q_1,q_2,q_3) &:= \delta_1(q_1,\delta_2(q_1,q_2,q_3),q_3)
+\end{align*}
+\item Leider gibt es ein paar Einschränkungen an die Reihenfolge:
+    \begin{center}
+        \begin{tikzpicture}[>=stealth]
+            \node (pushZiel) { $\pushZiel$ };
+            \node (popQuelle) [below=of pushZiel] { $\popQuelle$ };
+            \node (pushQuelle) [right=of pushZiel] { $\pushQuelle$ };
+            \node (popZiel) [right=of popQuelle] { $\popZiel$ };
+            \draw[->] (pushQuelle) edge (pushZiel) edge (popQuelle)
+            (popZiel) edge (pushZiel) edge (popQuelle);
+        \end{tikzpicture}
+    \end{center}
+\item Also z.B.
+    $ \delta := \delta_{\pushZiel} \circ \delta_{\popQuelle} \circ \delta_{\popZiel} \circ \delta_{\pushQuelle} $
+    \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Genügen schon zwei Bänder?}
+    \begin{itemize}
+        \item Komplett analog kann ein 2-Band-Stack entworfen werden - er hält aber nur ein Band gefüllt
+
+
+    \begin{tikzpicture}[every node/.style={anchor=base}]
+        \matrix [row sep=1cm,column sep=1cm] {
+            \draw[scale=0.4] (0,0) grid (4,2);
+            \begin{scope}[scale=0.4,xshift=12,yshift=5]
+                \node[anchor=east,yshift=4] at (-1,0.5) { 1. \nop };
+                \node at (0,1) {a};
+                \node at (1,1) {b};
+                \node at (2,1) {c};
+            \end{scope}
+            &
+
+
+            \filldraw[scale=0.4,lightgray] (0,2) rectangle (1,1);
+            \draw[scale=0.4] (0,0) grid (4,2);
+            \begin{scope}[scale=0.4,xshift=12,yshift=5]
+                \node[anchor=east,yshift=4] at (-1,0.5) { 2. \pop };
+                \node at (1,1) {b};
+                \node at (2,1) {c};
+            \end{scope}
+            \\
+
+            \filldraw[scale=0.4,lightgray] (1,2) rectangle (2,1);
+            \draw[scale=0.4] (0,0) grid (4,2);
+            \begin{scope}[scale=0.4,xshift=12,yshift=5]
+                \node[anchor=east,yshift=4] at (-1,0.5) { 3. \nop };
+                \node at (0,1) {b};
+                \node at (2,1) {c};
+            \end{scope}
+            &
+
+            \filldraw[scale=0.4,lightgray] (0,2) rectangle (1,1);
+            \filldraw[scale=0.4,lightgray] (2,2) rectangle (3,1);
+            \draw[scale=0.4] (0,0) grid (4,2);
+            \begin{scope}[scale=0.4,xshift=12,yshift=5]
+                \node[anchor=east,yshift=4] at (-1,0.5) { 4. \pop };
+                \node at (1,1) {c};
+            \end{scope}
+            \\
+        };
+    \end{tikzpicture}
+\item[$\Rightarrow$] Zwischen zwei {\pop}s muss ein {\nop } stehen
+    \end{itemize}
+\end{frame}
 \end{document}
