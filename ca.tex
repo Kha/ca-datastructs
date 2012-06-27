@@ -13,7 +13,7 @@
 \usepackage{hyperref}
 \usepackage{tikz}
 
-\usetikzlibrary{arrows,positioning}
+\usetikzlibrary{matrix,arrows,positioning}
 
 \begin{document}
 
@@ -24,6 +24,14 @@
 \newcommand{\bild}[1]{\text{Bild}(#1)}
 \newcommand{\N}{\mathbb{N}}
 \newcommand{\ve}[3]{\begin{pmatrix}#1\\#2\\#3\end{pmatrix}}
+
+\newcommand{\pop}{\ensuremath\mathit{pop}}
+\newcommand{\popZiel}{\ensuremath\mathit{popZiel}}
+\newcommand{\popQuelle}{\ensuremath\mathit{popQuelle}}
+\newcommand{\nop}{\ensuremath\mathit{nop}}
+\newcommand{\push}{\ensuremath\mathit{push}}
+\newcommand{\pushZiel}{\ensuremath\mathit{pushZiel}}
+\newcommand{\pushQuelle}{\ensuremath\mathit{pushQuelle}}
 
 \maketitle
 \newpage
@@ -137,6 +145,8 @@ und analog für Zelle -1.
 
 \section{Stack: Implementierungen}
 
+\subsection{Ein 3-Band-Stack ohne Zeitverlust}
+
 Kutribs Stack ohne Zeitverlust in \cite{kutrib08} besitzt die Zustandsmenge $(\Sigma \cup \{\epsilon\})^3$ mit $q_0 = (\epsilon,\epsilon,\epsilon)$, was er einen \emph{3-Band-Automaten} nennt, die drei Werte des Tupels \emph{Register}.
 
 Der Inhalt eines solchen Automaten ist die Konkatenation seiner Zellinhalte:
@@ -177,11 +187,11 @@ Jede Zelle des Automaten versucht, genau zwei ihrer Register gefüllt zu halten 
 
 \begin{figure}[h]
     \centering
-    \begin{tikzpicture}[every filldraw/.style=lightgray]
-        \matrix[row sep=1cm,column sep=1cm] {
+    \begin{tikzpicture}[every filldraw/.style=lightgray,every node/.style={anchor=base}]
+        \matrix (mym) [row sep=1cm,column sep=1cm] {
             \draw[scale=0.4] (1) (0,0) grid (4,3);
-            \begin{scope}[scale=0.4,xshift=12,yshift=12]
-                \node[anchor=east] at (-1,1) { $nop$ };
+            \begin{scope}[scale=0.4,xshift=12,yshift=5]
+                \node[anchor=east,yshift=3] at (-1,1) { 1. $nop$ };
                 \node at (0,2) {a};
                 \node at (0,1) {b};
                 \node at (1,2) {c};
@@ -192,8 +202,8 @@ Jede Zelle des Automaten versucht, genau zwei ihrer Register gefüllt zu halten 
 
             \filldraw[scale=0.4,lightgray] (0,2) rectangle (1,1);
             \draw[scale=0.4] (1) (0,0) grid (4,3);
-            \begin{scope}[scale=0.4,xshift=12,yshift=12]
-                \node[anchor=east] at (-1,1) { $pop$ };
+            \begin{scope}[scale=0.4,xshift=12,yshift=5]
+                \node[anchor=east,yshift=3] at (-1,1) { 2. $pop$ };
                 \node at (0,2) {b};
                 \node at (1,2) {c};
                 \node at (1,1) {d};
@@ -202,8 +212,8 @@ Jede Zelle des Automaten versucht, genau zwei ihrer Register gefüllt zu halten 
 
             \filldraw[scale=0.4,lightgray] (1,2) rectangle (2,1);
             \draw[scale=0.4] (1) (0,0) grid (4,3);
-            \begin{scope}[scale=0.4,xshift=12,yshift=12]
-                \node[anchor=east] at (-1,1) { $nop$ };
+            \begin{scope}[scale=0.4,xshift=12,yshift=5]
+                \node[anchor=east,yshift=3] at (-1,1) { 3. $nop$ };
                 \node at (0,2) {b};
                 \node at (0,1) {c};
                 \node at (1,2) {d};
@@ -212,8 +222,8 @@ Jede Zelle des Automaten versucht, genau zwei ihrer Register gefüllt zu halten 
 
             \filldraw[scale=0.4,lightgray] (0,2) rectangle (1,3);
             \draw[scale=0.4] (1) (0,0) grid (4,3);
-            \begin{scope}[scale=0.4,xshift=12,yshift=12]
-                \node[anchor=east] at (-1,1) { $push$ $a$ };
+            \begin{scope}[scale=0.4,xshift=12,yshift=5]
+                \node[anchor=east,yshift=3] at (-1,1) { 4. $push$ $a$ };
                 \node at (0,2) {a};
                 \node at (0,1) {b};
                 \node at (0,0) {c};
@@ -221,10 +231,10 @@ Jede Zelle des Automaten versucht, genau zwei ihrer Register gefüllt zu halten 
             \end{scope}
             \\
 
-            \filldraw[scale=0.4,lightgray] (0,2) rectangle (2,3);
+            \filldraw[scale=0.4,lightgray] (0,1) rectangle (2,2);
             \draw[scale=0.4] (1) (0,0) grid (4,3);
-            \begin{scope}[scale=0.4,xshift=12,yshift=12]
-                \node[anchor=east] at (-1,1) { $pop$ };
+            \begin{scope}[scale=0.4,xshift=12,yshift=5]
+                \node[anchor=east,yshift=3] at (-1,1) { 5. $pop$ };
                 \node at (0,2) {b};
                 \node at (1,2) {c};
                 \node at (1,1) {d};
@@ -233,8 +243,8 @@ Jede Zelle des Automaten versucht, genau zwei ihrer Register gefüllt zu halten 
 
             \filldraw[scale=0.4,lightgray] (1,1) rectangle (2,2);
             \draw[scale=0.4] (1) (0,0) grid (4,3);
-            \begin{scope}[scale=0.4,xshift=12,yshift=12]
-                \node[anchor=east] at (-1,1) { $nop$ };
+            \begin{scope}[scale=0.4,xshift=12,yshift=5]
+                \node[anchor=east,yshift=3] at (-1,1) { 6. $nop$ };
                 \node at (0,2) {b};
                 \node at (0,1) {c};
                 \node at (1,2) {d};
@@ -242,7 +252,7 @@ Jede Zelle des Automaten versucht, genau zwei ihrer Register gefüllt zu halten 
             \\
         };
     \end{tikzpicture}
-    \caption{Beispielablauf des 3-Band-Stacks}
+    \caption{Beispielablauf des 3-Band-Stacks. Graue Zellen beschreiben die Einfügungen bzw. Löschungen durch eine Operation}
 \end{figure}
 Betrachten wir beide Regeln jeweils aus Sicht der \emph{Quell-} und \emph{Zielzelle}, ergeben sich die vier Übergangsfunktionen
 \begin{align*}
@@ -292,6 +302,80 @@ Es verbleiben die Übergangsfunktionen des Stackkopfes. Diese können in diesem 
     \delta_{nop}(q_1, q_2) &:= \delta(\ve{b}{b}{\epsilon}, q_1, q_2) \\
 \end{align*}
 wobei $b \in \Sigma$ beliebig ist.
+
+\subsection{Ein 2-Band-Stack mit Zeitverlust}
+
+Exakt analog kann auch ein Stack mit nur zwei Bändern entworfen werden. Dieser hält wieder das letzte Band leer, also nur das erste Band gefüllt, und die vier Teilüberführungsfunktionen ergeben sich aus den angepassten Regeln
+\begin{enumerate}
+    \item Eine Zelle mit zwei vollen Registern gibt den Inhalt ihres zweiten Registers an ihren rechten Nachbarn ab, der ihn seinen Registern voranstellt.
+        \begin{center}
+            \begin{tikzpicture}[scale=0.4,>=stealth]
+                \filldraw[lightgray] (0,2) rectangle (1,0);
+                \filldraw[lightgray] (1,2) rectangle (2,1);
+                \draw (0,0) grid (2,2);
+                \begin{scope}[shorten >=0.5mm]
+                    \draw[->,thick] (0.5,0.5) -- (1.5,1.5);
+                    \draw[->,darkgray] (1.5,1.5) -- (1.5,0.5);
+                \end{scope}
+            \end{tikzpicture}
+        \end{center}
+    \item Eine Zelle mit zwei leeren Registern stiehlt das erste Register ihres rechten Nachbarn, falls gefüllt.
+        \begin{center}
+            \begin{tikzpicture}[scale=0.4,>=stealth]
+                \filldraw[lightgray] (1,2) rectangle (2,1);
+                \draw (0,0) grid (2,2);
+                \begin{scope}[shorten >=0.5mm]
+                    \draw[->,thick] (1.5,1.5) -- (0.5,1.5);
+                \end{scope}
+            \end{tikzpicture}
+        \end{center}
+\end{enumerate}
+Da die Symbole im Ruhezustand nun allerdings linear im ersten Band angeordnet sind, kann die \emph{pop}-Operation nicht mehr ohne Zeitverlust bedient werden: $\Delta^*_{\pop}=\Delta_{pop} \circ \Delta_{\nop}$.
+\begin{figure}[h]
+    \centering
+    \begin{tikzpicture}[every node/.style={anchor=base}]
+        \matrix [row sep=1cm,column sep=1cm] {
+            \draw[scale=0.4] (0,0) grid (4,2);
+            \begin{scope}[scale=0.4,xshift=12,yshift=5]
+                \node[anchor=east,yshift=4] at (-1,0.5) { 1. $nop$ };
+                \node at (0,1) {a};
+                \node at (1,1) {b};
+                \node at (2,1) {c};
+            \end{scope}
+            &
+
+
+            \filldraw[scale=0.4,lightgray] (0,2) rectangle (1,1);
+            \draw[scale=0.4] (0,0) grid (4,2);
+            \begin{scope}[scale=0.4,xshift=12,yshift=5]
+                \node[anchor=east,yshift=4] at (-1,0.5) { 2. $pop$ };
+                \node at (1,1) {b};
+                \node at (2,1) {c};
+            \end{scope}
+            \\
+
+            \filldraw[scale=0.4,lightgray] (1,2) rectangle (2,1);
+            \draw[scale=0.4] (0,0) grid (4,2);
+            \begin{scope}[scale=0.4,xshift=12,yshift=5]
+                \node[anchor=east,yshift=4] at (-1,0.5) { 3. $nop$ };
+                \node at (0,1) {b};
+                \node at (2,1) {c};
+            \end{scope}
+            &
+
+            \filldraw[scale=0.4,lightgray] (0,2) rectangle (1,1);
+            \filldraw[scale=0.4,lightgray] (2,2) rectangle (3,1);
+            \draw[scale=0.4] (0,0) grid (4,2);
+            \begin{scope}[scale=0.4,xshift=12,yshift=5]
+                \node[anchor=east,yshift=4] at (-1,0.5) { 4. $pop$ };
+                \node at (1,1) {c};
+            \end{scope}
+            \\
+        };
+    \end{tikzpicture}
+    \caption{Beispielablauf des 2-Band-Stacks}
+\end{figure}
+
 
 
 \section{Beweis}
