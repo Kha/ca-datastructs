@@ -85,9 +85,10 @@ Die Zahl $i$ der notwendigen Nulloperationen vor der eigentlichen Operation ist 
 Natürlich wollen wir noch Bedingungen an das Verhalten einer Datenstruktur stellen. Dazu müssen wir aber Aussagen über den \emph{Inhalt} der Datenstruktur machen können:
 \begin{definition}
     Für eine globale Konfiguration $c \in Q^\N$ sei $\Gamma(c) \in \Sigma^*$ die Folge von Zeichen, die bei wiederholtem Aufruf von \pop zurückgegeben werden:
-    \[ \Gamma(c) := \begin{cases}
+    \[ \Gamma(c) :=
+        \begin{cases}
             \epsilon &\text{falls } \Delta^*_{\pop}(c) \in \{\epsilon\} \times Q^\N \\
-        a \cdot \Gamma(c') &\text{falls }\Delta^*_{\pop}(c)=:(a,c') \in \Sigma \times Q^\N
+            a \cdot \Gamma(c') &\text{falls }\Delta^*_{\pop}(c)=:(a,c') \in \Sigma \times Q^\N
     \end{cases} \]
 \end{definition}
 
@@ -123,24 +124,24 @@ Analog kann eine Queue-Struktur formal definiert werden.
     \end{figure}
     Gegeben eine Stack-Implementierung $(Q_S, \delta_S, \delta_{\push}, \delta_{\pop}, \delta_{\nop}, q^S_0)$ ohne Zeitverlust, können wir mit zwei Stacks eine Turing-Maschine $(Q_T, \Sigma, \delta_T, q^T_0, q_f)$ ohne Zeitverlust simulieren (das Bandalphabet sei der Einfachheit halber das Eingabealphabet). Dazu speichern wir in Zelle 0  den aktuellen Zustand und das Symbol unter dem Lesekopf und links und rechts davon in je einem der Stacks das linke bzw. rechte Restband. Es ergibt sich $Q := (Q_T \times \Sigma) \cup Q^2_S$ und die Übergangsfunktion für Zelle 0
     \[ \delta_0(q_{-1}, (q, a), q_1) :=
-    \begin{cases}
-        (q', a') &\text{für } \delta_T(q, a) = (q', a', N) \\
-        (q', \bar\gamma(q_{-1})) &\text{für } \delta_T(q, a) = (q', a', L) \\
-        (q', \bar\gamma(q_1)) &\text{für } \delta_T(q, a) = (q', a', R) \\
+        \begin{cases}
+            (q', a') &\text{für } \delta_T(q, a) = (q', a', N) \\
+            (q', \bar\gamma(q_{-1})) &\text{für } \delta_T(q, a) = (q', a', L) \\
+            (q', \bar\gamma(q_1)) &\text{für } \delta_T(q, a) = (q', a', R) \\
     \end{cases} \]
-mit
-\[ \bar\gamma : Q_S \rightarrow \Sigma, q \mapsto \begin{cases}
-        \gamma(q) &\text{für } \gamma(q) \in \Sigma \\
-        \sqcup &\text{für } \gamma(q) = \epsilon
+    mit
+    \[ \bar\gamma : Q_S \rightarrow \Sigma, q \mapsto \begin{cases}
+            \gamma(q) &\text{für } \gamma(q) \in \Sigma \\
+            \sqcup &\text{für } \gamma(q) = \epsilon
     \end{cases} \]
-und Zelle 1
+    und Zelle 1
     \[ \delta_1((q, a), q_1, q_2) :=
-    \begin{cases}
-        \delta_{\nop}(q_1, q_2) &\text{für } \delta_T(q, a) = (q', a', N) \\
-        \delta_{\push}(a', q_1, q_2) &\text{für } \delta_T(q, a) = (q', a', L) \\
-        \delta_{\pop}(q_1, q_2) &\text{für } \delta_T(q, a) = (q', a', R) \\
+        \begin{cases}
+            \delta_{\nop}(q_1, q_2) &\text{für } \delta_T(q, a) = (q', a', N) \\
+            \delta_{\push}(a', q_1, q_2) &\text{für } \delta_T(q, a) = (q', a', L) \\
+            \delta_{\pop}(q_1, q_2) &\text{für } \delta_T(q, a) = (q', a', R) \\
     \end{cases} \]
-und analog für Zelle -1.
+    und analog für Zelle -1.
 \end{beispiel}
 
 \section{Stack: Implementierungen}
@@ -152,7 +153,7 @@ Kutribs Stack ohne Zeitverlust in \cite{kutrib08} besitzt die Zustandsmenge $(\S
 Der Inhalt eines solchen Automaten ist die Konkatenation seiner Zellinhalte:
 \begin{align*}
     \gamma(\ve{r_1}{r_2}{r_3}) &:= r_1 \\
-\Gamma(c) &= \sum^\infty_{i=1} c(i)
+    \Gamma(c) &= \sum^\infty_{i=1} c(i)
 \end{align*}
 Diese Summe ist endlich, da sich in jeder validen, also in endlicher Zeit aus dem leeren Band entstandenen Konfiguration nur endlich viele Zellen von $q_0$ unterscheiden können.
 
@@ -288,12 +289,12 @@ Schwieriger ist dagegen die Festlegung der Reihenfolge. Es ergeben sich folgende
         \node (pushQuelle) [right=of pushZiel] { \pushQuelle };
         \node (popZiel) [right=of popQuelle] { \popZiel };
         \draw[->] (pushQuelle) edge (pushZiel) edge (popQuelle)
-                  (popZiel) edge (pushZiel) edge (popQuelle);
+        (popZiel) edge (pushZiel) edge (popQuelle);
     \end{tikzpicture}
     \caption{Abhängigkeitsdiagramm der vier Übergangsfunktionen}
 \end{figure}
 Damit ergibt sich als eine von vier Möglichkeiten beispielhaft
-    \[ \delta := \delta_{\pushZiel} \circ \delta_{\popQuelle} \circ \delta_{\popZiel} \circ \delta_{\pushQuelle} \]
+\[ \delta := \delta_{\pushZiel} \circ \delta_{\popQuelle} \circ \delta_{\popZiel} \circ \delta_{\pushQuelle} \]
 
 Es verbleiben die Übergangsfunktionen des Stackkopfes. Diese können in diesem Fall allerdings leicht aus $\delta$ abgeleitet werden, indem die jeweilige Operation als virtuelle Zelle links vom Kopf betrachtet wird:
 \begin{align*}
@@ -403,7 +404,7 @@ Dieser Satz sagt allerdings nichts aus über die tatsächliche Speicherung der I
 
 \begin{definition}
     Für eine zelluläre Datenstruktur definieren wir den Inhalt der ersten $n$ Zellen als
-        \[ \Gamma(c,n) := \Gamma(c) \big|_m \]
+    \[ \Gamma(c,n) := \Gamma(c) \big|_m \]
     wobei $\Gamma(c) \big|_m$ den Präfix von $\Gamma(c)$ der Länge $m$ bezeichnet und $m$ definiert ist als
     \[ m := \max \{m' \in \N \mid \Gamma(c) \big|_{m'} = \Gamma(c') \big|_{m'} \;\forall c' \text{ valide Konfiguration}, c' \big|_n = c \big|_n \} \]
     also $\Gamma(c,n)$ längster gemeinsamer Inhaltspräfix aller Konfigurationen mit den gleichen ersten $n$ Zellen ist oder anders gesagt der Inhalt, der von allen Zellen $> n$ unabhängig ist.
@@ -442,8 +443,8 @@ Dieser Satz sagt allerdings nichts aus über die tatsächliche Speicherung der I
 
 \begin{thebibliography}{9}
 
-\bibitem{kutrib08}
-    M. Kutrib: \emph{Cellular Automata – A Computational Point of View}, Studies in Computational Intelligence (SCI) 113, 183–227 (2008)
+    \bibitem{kutrib08}
+        M. Kutrib: \emph{Cellular Automata – A Computational Point of View}, Studies in Computational Intelligence (SCI) 113, 183–227 (2008)
 
 \end{thebibliography}
 \end{document}

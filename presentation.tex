@@ -1,5 +1,6 @@
 % vim: spelllang=de_20
 \documentclass{beamer}
+\useoutertheme[subsection=false,compress,footline=authortitle]{miniframes}
 
 \title{Zellularautomaten: Datenstrukturen}
 \author{Sebastian Ullrich}
@@ -13,9 +14,12 @@
 
 \usetikzlibrary{arrows,positioning}
 
+\DeclareMathOperator{\zip}{zip}
+
 \begin{document}
 
 \newcommand{\ve}[3]{\begin{pmatrix}#1\\#2\\#3\end{pmatrix}}
+\newcommand{\vet}[2]{\begin{pmatrix}#1\\#2\end{pmatrix}}
 
 \newcommand{\pop}{\ensuremath{\mathit{pop}}}
 \newcommand{\popZiel}{\ensuremath{\mathit{popZiel}}}
@@ -24,22 +28,28 @@
 \newcommand{\push}{\ensuremath{\mathit{push}}}
 \newcommand{\pushZiel}{\ensuremath{\mathit{pushZiel}}}
 \newcommand{\pushQuelle}{\ensuremath{\mathit{pushQuelle}}}
+\newcommand{\enqueue}{\ensuremath{\mathit{enqueue}}}
+\newcommand{\dequeue}{\ensuremath{\mathit{dequeue}}}
 
+\setbeamertemplate{headline}{}
 \begin{frame}
     \titlepage
 \end{frame}
 
-\begin{frame}
+\begin{frame}{Inhalt}
     \tableofcontents
 \end{frame}
+
+\setbeamertemplate{headline}[miniframes theme]{}
+\setbeamerfont*{subsection in head/foot}{size=\tiny}
 \section{Motivation}
 \begin{frame}{Was?}
     \begin{itemize}
         \item Eindimensionale Zellularautomaten eignen sich wunderbar dafür, lineare Datenstrukturen zu simulieren
         \item Wir betrachten die einfachsten davon: Stacks und Queues
             \begin{center}
-                \begin{tikzpicture}[>=stealth]
-                    \matrix[row sep=1cm,midway] {
+                \begin{tikzpicture}[>=stealth,every node/.style={anchor=base,yshift=-2.5}]
+                    \matrix[row sep=1cm,midway,cells={scale=0.5}] {
                         \useasboundingbox (1,0) rectangle (6,1);
                         \draw (1,0) grid (5,1);
                         \draw (1,0) -- (6,0);
@@ -58,7 +68,7 @@
                         \node at (2.5,0.5) {a};
                         \node at (3.5,0.5) {b};
                         \node at (4.5,0.5) {c};
-                        \draw[->,thick] (0.5,1.5) -- node[sloped,above] { $\push$ $z$ } (1,1);
+                        \draw[->,thick] (0.5,1.5) -- node[above=0.1] { $\push$ $z$ } (1,1);
                         \\
 
                         \useasboundingbox (1,-1) rectangle (6,1);
@@ -68,7 +78,7 @@
                         \node at (1.5,0.5) {a};
                         \node at (2.5,0.5) {b};
                         \node at (3.5,0.5) {c};
-                        \draw[->,thick] (1,0) -- node[sloped,below] { $\pop$ } (0.5,-0.5);
+                        \draw[->,thick] (1,0) -- node[below] { $\pop$ } (0.5,-0.5);
                         \\
                     };
                 \end{tikzpicture}
@@ -77,7 +87,7 @@
     \end{itemize}
 \end{frame}
 
-\begin{frame}{Warum?}
+\begin{frame}{Wozu?}
     \begin{itemize}
         \item Regel 110 ist Turing-vollständig, aber kaum zu überblicken
         \item Wir bauen uns eine einfachere Turing-Maschine
@@ -142,71 +152,71 @@
         \item Hintereinander aufgereiht können die Symbole augenscheinlich nicht schnell genug aus dem Stack herausgeholt werden
 
             $\Rightarrow$ Wir speichern mehrere Symbole in einer Zelle
-    \begin{tikzpicture}[every filldraw/.style=lightgray]
-        \matrix[row sep=1cm,column sep=1cm] {
-            \draw[scale=0.4] (1) (0,0) grid (4,3);
-            \begin{scope}[scale=0.4,xshift=12,yshift=12]
-                \node[anchor=east] at (-1,1) { $\nop$ };
-                \node at (0,2) {a};
-                \node at (0,1) {b};
-                \node at (1,2) {c};
-                \node at (1,1) {d};
-            \end{scope}
-            &
+            \begin{tikzpicture}[every filldraw/.style=lightgray,every node/.style={anchor=base}]
+                \matrix (mym) [row sep=1cm,column sep=1cm] {
+                    \draw[scale=0.4] (1) (0,0) grid (4,3);
+                    \begin{scope}[scale=0.4,xshift=12,yshift=5]
+                        \node[anchor=east,yshift=3] at (-1,1) { 1. \nop };
+                        \node at (0,2) {a};
+                        \node at (0,1) {b};
+                        \node at (1,2) {c};
+                        \node at (1,1) {d};
+                    \end{scope}
+                    &
 
 
-            \filldraw[scale=0.4,lightgray] (0,2) rectangle (1,1);
-            \draw[scale=0.4] (1) (0,0) grid (4,3);
-            \begin{scope}[scale=0.4,xshift=12,yshift=12]
-                \node[anchor=east] at (-1,1) { $\pop$ };
-                \node at (0,2) {b};
-                \node at (1,2) {c};
-                \node at (1,1) {d};
-            \end{scope}
-            \\
+                    \filldraw[scale=0.4,lightgray] (0,2) rectangle (1,1);
+                    \draw[scale=0.4] (1) (0,0) grid (4,3);
+                    \begin{scope}[scale=0.4,xshift=12,yshift=5]
+                        \node[anchor=east,yshift=3] at (-1,1) { 2. \pop };
+                        \node at (0,2) {b};
+                        \node at (1,2) {c};
+                        \node at (1,1) {d};
+                    \end{scope}
+                    \\
 
-            \filldraw[scale=0.4,lightgray] (1,2) rectangle (2,1);
-            \draw[scale=0.4] (1) (0,0) grid (4,3);
-            \begin{scope}[scale=0.4,xshift=12,yshift=12]
-                \node[anchor=east] at (-1,1) { $\nop$ };
-                \node at (0,2) {b};
-                \node at (0,1) {c};
-                \node at (1,2) {d};
-            \end{scope}
-            &
+                    \filldraw[scale=0.4,lightgray] (1,2) rectangle (2,1);
+                    \draw[scale=0.4] (1) (0,0) grid (4,3);
+                    \begin{scope}[scale=0.4,xshift=12,yshift=5]
+                        \node[anchor=east,yshift=3] at (-1,1) { 3. \nop };
+                        \node at (0,2) {b};
+                        \node at (0,1) {c};
+                        \node at (1,2) {d};
+                    \end{scope}
+                    &
 
-            \filldraw[scale=0.4,lightgray] (0,2) rectangle (1,3);
-            \draw[scale=0.4] (1) (0,0) grid (4,3);
-            \begin{scope}[scale=0.4,xshift=12,yshift=12]
-                \node[anchor=east] at (-1,1) { $\push$ $a$ };
-                \node at (0,2) {a};
-                \node at (0,1) {b};
-                \node at (0,0) {c};
-                \node at (1,2) {d};
-            \end{scope}
-            \\
+                    \filldraw[scale=0.4,lightgray] (0,2) rectangle (1,3);
+                    \draw[scale=0.4] (1) (0,0) grid (4,3);
+                    \begin{scope}[scale=0.4,xshift=12,yshift=5]
+                        \node[anchor=east,yshift=3] at (-1,1) { 4. {\push} $a$ };
+                        \node at (0,2) {a};
+                        \node at (0,1) {b};
+                        \node at (0,0) {c};
+                        \node at (1,2) {d};
+                    \end{scope}
+                    \\
 
-            \filldraw[scale=0.4,lightgray] (0,2) rectangle (2,3);
-            \draw[scale=0.4] (1) (0,0) grid (4,3);
-            \begin{scope}[scale=0.4,xshift=12,yshift=12]
-                \node[anchor=east] at (-1,1) { $\pop$ };
-                \node at (0,2) {b};
-                \node at (1,2) {c};
-                \node at (1,1) {d};
-            \end{scope}
-            &
+                    \filldraw[scale=0.4,lightgray] (0,1) rectangle (2,2);
+                    \draw[scale=0.4] (1) (0,0) grid (4,3);
+                    \begin{scope}[scale=0.4,xshift=12,yshift=5]
+                        \node[anchor=east,yshift=3] at (-1,1) { 5. \pop };
+                        \node at (0,2) {b};
+                        \node at (1,2) {c};
+                        \node at (1,1) {d};
+                    \end{scope}
+                    &
 
-            \filldraw[scale=0.4,lightgray] (1,1) rectangle (2,2);
-            \draw[scale=0.4] (1) (0,0) grid (4,3);
-            \begin{scope}[scale=0.4,xshift=12,yshift=12]
-                \node[anchor=east] at (-1,1) { $\nop$ };
-                \node at (0,2) {b};
-                \node at (0,1) {c};
-                \node at (1,2) {d};
-            \end{scope}
-            \\
-        };
-    \end{tikzpicture}
+                    \filldraw[scale=0.4,lightgray] (1,1) rectangle (2,2);
+                    \draw[scale=0.4] (1) (0,0) grid (4,3);
+                    \begin{scope}[scale=0.4,xshift=12,yshift=5]
+                        \node[anchor=east,yshift=3] at (-1,1) { 6. \nop };
+                        \node at (0,2) {b};
+                        \node at (0,1) {c};
+                        \node at (1,2) {d};
+                    \end{scope}
+                    \\
+                };
+            \end{tikzpicture}
     \end{itemize}
 \end{frame}
 
@@ -214,31 +224,31 @@
     \begin{itemize}
         \item Der Stack besteht aus drei \emph{Bändern}, jede Zelle aus drei \emph{Registern}
         \item Wir wollen jeweils die ersten zwei Register gefüllt halten
-    \item Eine Zelle mit drei vollen Registern gibt den Inhalt ihres dritten Registers an ihren rechten Nachbarn ab, der ihn seinen Registern voranstellt
-        \begin{center}
-            \begin{tikzpicture}[scale=0.4,>=stealth]
-                \filldraw[lightgray] (0,3) rectangle (1,0);
-                \filldraw[lightgray] (1,3) rectangle (2,1);
-                \draw (0,0) grid (2,3);
-                \begin{scope}[shorten >=0.5mm]
-                    \draw[->,thick] (0.5,0.5) -- (1.5,2.5);
-                    \draw[->,darkgray] (1.5,2.5) -- (1.5,1.5);
-                    \draw[->,darkgray] (1.5,1.5) -- (1.5,0.5);
-                \end{scope}
-            \end{tikzpicture}
-        \end{center}
-    \item Eine Zelle mit weniger als zwei vollen Registern stiehlt das erste Register ihres rechten Nachbarn
-        \begin{center}
-            \begin{tikzpicture}[scale=0.4,>=stealth]
-                \filldraw[lightgray] (0,3) rectangle (1,2);
-                \filldraw[lightgray] (1,3) rectangle (2,1);
-                \draw (0,0) grid (2,3);
-                \begin{scope}[shorten >=0.5mm]
-                    \draw[->,thick] (1.5,2.5) -- (0.5,1.5);
-                    \draw[->,darkgray] (1.5,1.5) -- (1.5,2.5);
-                \end{scope}
-            \end{tikzpicture}
-        \end{center}
+        \item Eine Zelle mit drei vollen Registern gibt den Inhalt ihres dritten Registers an ihren rechten Nachbarn ab, der ihn seinen Registern voranstellt
+            \begin{center}
+                \begin{tikzpicture}[scale=0.4,>=stealth]
+                    \filldraw[lightgray] (0,3) rectangle (1,0);
+                    \filldraw[lightgray] (1,3) rectangle (2,1);
+                    \draw (0,0) grid (2,3);
+                    \begin{scope}[shorten >=0.5mm]
+                        \draw[->,thick] (0.5,0.5) -- (1.5,2.5);
+                        \draw[->,darkgray] (1.5,2.5) -- (1.5,1.5);
+                        \draw[->,darkgray] (1.5,1.5) -- (1.5,0.5);
+                    \end{scope}
+                \end{tikzpicture}
+            \end{center}
+        \item Eine Zelle mit weniger als zwei vollen Registern stiehlt das erste Register ihres rechten Nachbarn
+            \begin{center}
+                \begin{tikzpicture}[scale=0.4,>=stealth]
+                    \filldraw[lightgray] (0,3) rectangle (1,2);
+                    \filldraw[lightgray] (1,3) rectangle (2,1);
+                    \draw (0,0) grid (2,3);
+                    \begin{scope}[shorten >=0.5mm]
+                        \draw[->,thick] (1.5,2.5) -- (0.5,1.5);
+                        \draw[->,darkgray] (1.5,1.5) -- (1.5,2.5);
+                    \end{scope}
+                \end{tikzpicture}
+            \end{center}
     \end{itemize}
 \end{frame}
 
@@ -267,51 +277,53 @@
                     \end{align*}
                 \end{columns}
             }
-                \only<2>{
-\begin{columns}
-    \column{0cm}
-            \begin{tikzpicture}[scale=0.4,>=stealth]
-                \filldraw[lightgray] (0,3) rectangle (1,2);
-                \filldraw[lightgray] (1,3) rectangle (2,1);
-                \draw (0,0) grid (2,3);
-                \begin{scope}[shorten >=0.5mm]
-                    \draw[->,thick] (1.5,2.5) -- (0.5,1.5);
-                    \draw[->,darkgray] (1.5,1.5) -- (1.5,2.5);
-                \end{scope}
-            \end{tikzpicture}
-            \column{0cm}
-            \begin{align*}
-    \delta_{\popQuelle}(\ve{r_1}{\epsilon}{\epsilon},\ve{s_1}{s_2}{s_3},q_3) &= \ve{s_2}{s_3}{\epsilon} \text { falls } s_1 \in \Sigma \\
-    \delta_{\popZiel}(q_1,\ve{r_1}{\epsilon}{\epsilon},\ve{s_1}{s_2}{s_3}) &= \begin{cases}
-        \ve{r_1}{s_1}{\epsilon} &\text { falls } s_1,r_1 \in \Sigma \\
-        \ve{s_1}{\epsilon}{\epsilon} &\text { falls } r_1 \in \Sigma, r_1 = \epsilon
-    \end{cases}
-\end{align*}
-\end{columns}
-}
+            \only<2>{
+                \begin{columns}
+                    \column{0cm}
+                    \begin{tikzpicture}[scale=0.4,>=stealth]
+                        \filldraw[lightgray] (0,3) rectangle (1,2);
+                        \filldraw[lightgray] (1,3) rectangle (2,1);
+                        \draw (0,0) grid (2,3);
+                        \begin{scope}[shorten >=0.5mm]
+                            \draw[->,thick] (1.5,2.5) -- (0.5,1.5);
+                            \draw[->,darkgray] (1.5,1.5) -- (1.5,2.5);
+                        \end{scope}
+                    \end{tikzpicture}
+                    \column{0cm}
+                    \begin{align*}
+                        \delta_{\popQuelle}(\ve{r_1}{\epsilon}{\epsilon},\ve{s_1}{s_2}{s_3},q_3) &= \ve{s_2}{s_3}{\epsilon} \text { falls } s_1 \in \Sigma \\
+                        \delta_{\popZiel}(q_1,\ve{r_1}{\epsilon}{\epsilon},\ve{s_1}{s_2}{s_3}) &= \begin{cases}
+                            \ve{r_1}{s_1}{\epsilon} &\text { falls } s_1,r_1 \in \Sigma \\
+                            \ve{s_1}{\epsilon}{\epsilon} &\text { falls } r_1 \in \Sigma, r_1 = \epsilon
+                        \end{cases}
+                    \end{align*}
+                \end{columns}
+            }
     \end{itemize}
 \end{frame}
 
 \begin{frame}{Wie? - noch exakter}
     \begin{itemize}
-        \item Pro Zelle können mehrere Regeln sowohl als Quell- als auch als Zielzelle gleichzeitig angewendet werden müssen $\Rightarrow$ komponiere sie in eine Überführungsfunktion:
-\begin{align*}
-    \circ : Q^{Q \times Q \times Q} \times Q^{Q \times Q \times Q} &\rightarrow Q^{Q \times Q \times Q} \\
-    (\delta_1 \circ \delta_2)(q_1,q_2,q_3) &:= \delta_1(q_1,\delta_2(q_1,q_2,q_3),q_3)
-\end{align*}
-\item Leider gibt es ein paar Einschränkungen an die Reihenfolge:
-    \begin{center}
-        \begin{tikzpicture}[>=stealth]
-            \node (pushZiel) { $\pushZiel$ };
-            \node (popQuelle) [below=of pushZiel] { $\popQuelle$ };
-            \node (pushQuelle) [right=of pushZiel] { $\pushQuelle$ };
-            \node (popZiel) [right=of popQuelle] { $\popZiel$ };
-            \draw[->] (pushQuelle) edge (pushZiel) edge (popQuelle)
-            (popZiel) edge (pushZiel) edge (popQuelle);
-        \end{tikzpicture}
-    \end{center}
-\item Also z.B.
-    $ \delta := \delta_{\pushZiel} \circ \delta_{\popQuelle} \circ \delta_{\popZiel} \circ \delta_{\pushQuelle} $
+        \item Pro Zelle können mehrere Regeln sowohl als Quell- als auch als Zielzelle gleichzeitig angewendet werden müssen\\
+            $\Rightarrow$ komponiere sie in eine Überführungsfunktion:
+            \begin{align*}
+                \circ : \Delta_Q \times \Delta_Q &\rightarrow \Delta_Q \\
+                (\delta_1 \circ \delta_2)(q_1,q_2,q_3) &:= \delta_1(q_1,\delta_2(q_1,q_2,q_3),q_3)
+            \end{align*}
+            Dabei ist $\Delta_Q := Q^{Q\times Q \times Q}$ die Menge der Überführungsfunktionen zum Zustand $Q$
+        \item Leider gibt es ein paar Einschränkungen an die Reihenfolge:
+            \begin{center}
+                \begin{tikzpicture}[>=stealth]
+                    \node (pushZiel) { $\pushZiel$ };
+                    \node (popQuelle) [below=of pushZiel] { $\popQuelle$ };
+                    \node (pushQuelle) [right=of pushZiel] { $\pushQuelle$ };
+                    \node (popZiel) [right=of popQuelle] { $\popZiel$ };
+                    \draw[->] (pushQuelle) edge (pushZiel) edge (popQuelle)
+                    (popZiel) edge (pushZiel) edge (popQuelle);
+                \end{tikzpicture}
+            \end{center}
+        \item Also z.B.
+            $ \delta := \delta_{\pushZiel} \circ \delta_{\popQuelle} \circ \delta_{\popZiel} \circ \delta_{\pushQuelle} $
     \end{itemize}
 \end{frame}
 
@@ -320,47 +332,105 @@
         \item Komplett analog kann ein 2-Band-Stack entworfen werden - er hält aber nur ein Band gefüllt
 
 
-    \begin{tikzpicture}[every node/.style={anchor=base}]
-        \matrix [row sep=1cm,column sep=1cm] {
-            \draw[scale=0.4] (0,0) grid (4,2);
-            \begin{scope}[scale=0.4,xshift=12,yshift=5]
-                \node[anchor=east,yshift=4] at (-1,0.5) { 1. \nop };
-                \node at (0,1) {a};
-                \node at (1,1) {b};
-                \node at (2,1) {c};
-            \end{scope}
-            &
+            \begin{tikzpicture}[every node/.style={anchor=base}]
+                \matrix [row sep=1cm,column sep=1cm] {
+                    \draw[scale=0.4] (0,0) grid (4,2);
+                    \begin{scope}[scale=0.4,xshift=12,yshift=5]
+                        \node[anchor=east,yshift=4] at (-1,0.5) { 1. \nop };
+                        \node at (0,1) {a};
+                        \node at (1,1) {b};
+                        \node at (2,1) {c};
+                    \end{scope}
+                    &
 
 
-            \filldraw[scale=0.4,lightgray] (0,2) rectangle (1,1);
-            \draw[scale=0.4] (0,0) grid (4,2);
-            \begin{scope}[scale=0.4,xshift=12,yshift=5]
-                \node[anchor=east,yshift=4] at (-1,0.5) { 2. \pop };
-                \node at (1,1) {b};
-                \node at (2,1) {c};
-            \end{scope}
-            \\
+                    \filldraw[scale=0.4,lightgray] (0,2) rectangle (1,1);
+                    \draw[scale=0.4] (0,0) grid (4,2);
+                    \begin{scope}[scale=0.4,xshift=12,yshift=5]
+                        \node[anchor=east,yshift=4] at (-1,0.5) { 2. \pop };
+                        \node at (1,1) {b};
+                        \node at (2,1) {c};
+                    \end{scope}
+                    \\
 
-            \filldraw[scale=0.4,lightgray] (1,2) rectangle (2,1);
-            \draw[scale=0.4] (0,0) grid (4,2);
-            \begin{scope}[scale=0.4,xshift=12,yshift=5]
-                \node[anchor=east,yshift=4] at (-1,0.5) { 3. \nop };
-                \node at (0,1) {b};
-                \node at (2,1) {c};
-            \end{scope}
-            &
+                    \filldraw[scale=0.4,lightgray] (1,2) rectangle (2,1);
+                    \draw[scale=0.4] (0,0) grid (4,2);
+                    \begin{scope}[scale=0.4,xshift=12,yshift=5]
+                        \node[anchor=east,yshift=4] at (-1,0.5) { 3. \nop };
+                        \node at (0,1) {b};
+                        \node at (2,1) {c};
+                    \end{scope}
+                    &
 
-            \filldraw[scale=0.4,lightgray] (0,2) rectangle (1,1);
-            \filldraw[scale=0.4,lightgray] (2,2) rectangle (3,1);
-            \draw[scale=0.4] (0,0) grid (4,2);
-            \begin{scope}[scale=0.4,xshift=12,yshift=5]
-                \node[anchor=east,yshift=4] at (-1,0.5) { 4. \pop };
-                \node at (1,1) {c};
-            \end{scope}
-            \\
-        };
-    \end{tikzpicture}
-\item[$\Rightarrow$] Zwischen zwei {\pop}s muss ein {\nop } stehen
+                    \filldraw[scale=0.4,lightgray] (0,2) rectangle (1,1);
+                    \filldraw[scale=0.4,lightgray] (2,2) rectangle (3,1);
+                    \draw[scale=0.4] (0,0) grid (4,2);
+                    \begin{scope}[scale=0.4,xshift=12,yshift=5]
+                        \node[anchor=east,yshift=4] at (-1,0.5) { 4. \pop };
+                        \node at (1,1) {c};
+                    \end{scope}
+                    \\
+                };
+            \end{tikzpicture}
+        \item[$\Rightarrow$] Zwischen zwei {\pop}s muss ein {\nop } stehen
     \end{itemize}
+\end{frame}
+
+\section{Implementierung einer Queue ohne Zeitverlust}
+
+\begin{frame}{Und jetzt für Queues}
+    \begin{itemize}
+        \item Mit zwei gefüllten Bändern können wir eine \pop/\dequeue-Operation ohne Zeitverlust anbieten
+        \item Wir fügen noch ein drittes an, um Symbole vom Queue-Kopf ans Ende transportieren zu können $\Rightarrow$ \enqueue!
+            \begin{center}
+                \begin{tikzpicture}[scale=0.4,every node/.style={anchor=base}]
+
+                    \draw (1) (0,0) grid (4,3);
+                    \draw[->,>=stealth,thick,rounded corners] (0.1,0.5) -- (2.5,0.5) -- (2.5,2.5);
+                    \begin{scope}[xshift=12,yshift=4]
+                        \node at (0,2) {a};
+                        \node at (0,1) {b};
+                        \node at (1,2) {c};
+                        \node at (1,1) {d};
+                    \end{scope}
+                \end{tikzpicture}
+            \end{center}
+        \item (Demo)
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Und jetzt für Queues - formalisiert}
+    \begin{itemize}
+        \item Die Bewegung nach links der ersten zwei Bänder $\delta_\dequeue \in \Delta_{(\Sigma \cup \{\epsilon\})^2}$ sei analog zum 3-Band-Stack definiert
+        \item Die Bewegung nach rechts des letzten Bandes $\delta_\enqueue \in \Delta_{(\Sigma \cup \{\epsilon\})}$ ist auch nicht schwer zu definieren:
+            \[ \delta_\enqueue(q_0,q_1,q_2) := q_0 \]
+        \item Mit einem weiteren Kombinator können wir diese Teilüberführungsfunktionen leicht "`übereinander"' legen:
+            \begin{align*}
+                \zip : \Delta_{Q_1} \times \Delta_{Q_2} &\rightarrow \Delta_{Q_1 \times Q_2} \\
+                \zip(\delta_1, \delta_2)(\vet{q_0}{r_0},\vet{q_1}{r_1},\vet{q_2}{r_2}) &:= \vet{\delta_1(q_0,q_1,q_2)}{\delta_2(r_0,r_1,r_2)}
+            \end{align*}
+            \vspace{0.1cm}
+            \[ \Rightarrow \zip(\delta_\enqueue,\delta_\dequeue) \in \Delta_{(\Sigma \cup \{\epsilon\})^3} \]
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Und jetzt für Queues - formalisiert}
+    \begin{itemize}
+        \item Es fehlt nur noch die Interaktion der zwei Teile:
+            \[ \delta_\text{shiftUp} \in \Delta_{(\Sigma \cup \{\epsilon\})^3} \]
+            \begin{align*}
+                \delta_\text{shiftUp}(p_0,\ve{q_1}{\epsilon}{s_1},p_2) &:= \ve{q_1}{s_1}{\epsilon} \text{ für } q_1 \in \Sigma\\
+                \delta_\text{shiftUp}(p_0,\ve{\epsilon}{\epsilon}{s_1},p_2) &:= \ve{s_1}{\epsilon}{\epsilon}
+            \end{align*}
+        \item Wir kombinieren scharf:
+            \[ \delta := \delta_\text{shiftUp} \circ \zip(\delta_\enqueue,\delta_\dequeue) \]
+    \end{itemize}
+\end{frame}
+
+\setbeamertemplate{headline}{}
+\begin{frame}{Danke für die Aufmerksamkeit!}
+    \begin{center}
+        Fragen?
+    \end{center}
 \end{frame}
 \end{document}
