@@ -1,8 +1,10 @@
 {-# LANGUAGE FlexibleInstances #-}
 
-module Tape3 where
+module CA.StackLike.Tape3 where
 
 import CA
+import CA.Output
+import CA.StackLike
 import Data.Maybe
 
 instance MultiShow [Char] where

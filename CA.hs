@@ -1,15 +1,7 @@
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE UndecidableInstances #-}
-{-# LANGUAGE OverlappingInstances #-}
-{-# LANGUAGE TupleSections #-}
-
 module CA where
 
-import Data.Bits
 import Data.Char
 import Data.List
-import Control.Concurrent
-import System.Console.ANSI
 import Data.Maybe
 
 type Delta a = a -> a -> a -> a
@@ -56,171 +48,20 @@ concatAutomata1 a0 a1 toLeft toRight = concatAutomata a0 a1 transLeft transRight
     transLeft q0 q1 q2 = delta a0 q0 q1 (toLeft q2)
     transRight q0 q1 q2 = delta a1 (toRight q0) q1 q2
 
-pad :: Int -> a -> [a] -> [a]
-pad n x xs = xs ++ replicate (n - length xs) x
-
-padTranspose :: [[String]] -> [String]
-padTranspose [] = []
-padTranspose xss = map concat . transpose . map (pad lines " ") $ xss where
-    lines = foldr1 max . map length $ xss
-
-class MultiShow a where
-    multiShow :: a -> [String]
-
-instance Show a => MultiShow a where
-    multiShow a = [show a]
-
-instance MultiShow Char where
-    multiShow c = [[c]]
-
-class Tape a where
-    tapeShow :: [a] -> [String]
-
-instance MultiShow a => Tape a where
-    tapeShow = padTranspose . map multiShow
-
-bracketizeLines :: [String] -> [String]
-bracketizeLines lines = zipWith line [0..] lines where
-    line 0 l = "⎡" ++ l ++ "⎤"
-    line n l | n == length lines - 1 = "⎣" ++ l ++ "⎦"
-    line _ l = "⎢" ++ l ++ "⎥"
-
 windowed :: Int -> [a] -> [[a]]
 windowed size xs@(x:xs') = case take size xs of
     win | length win == size -> win : windowed size xs'
     _ -> []
 
-diffOut :: String -> String -> IO ()
-diffOut x y = loop $ zip (x ++ repeat ' ') y where
-    loop [] = putStrLn ""
-    loop xs = do
-        putStr . map snd $ same
-        setSGR [SetColor Foreground Vivid Red]
-        putStr . map snd $ unsame
-        setSGR [SetColor Foreground Vivid White]
-        loop rest'
-        where
-            (same, rest) = span (uncurry (==)) xs
-            (unsame, rest') = span (uncurry (/=)) rest
+pad :: Int -> a -> [a] -> [a]
+pad n x xs = xs ++ replicate (n - length xs) x
 
-step :: Eq a => Automaton a -> [a] -> Maybe ([a], Int)
-step Automaton { q_0 = q_0, delta = delta } qs =
-    let qsPadded = [q_0,q_0] ++ qs ++ [q_0,q_0] in
-    let qs' = map (\[q0,q1,q2] -> delta q0 q1 q2) . windowed 3 $ qsPadded in
-    let pad = (length . takeWhile (== q_0) $ qs') - 1 in
-    let qs'Unpadded = reverse . dropWhile (== q_0) . reverse . dropWhile (== q_0) $ qs' in
-    if qs'Unpadded == qs && pad == 0
+step :: Eq a => Configuration a -> Maybe (Configuration a, Int)
+step (a @ Automaton { q_0 = q_0, delta = delta },tape) =
+    let tapePadded = [q_0,q_0] ++ tape ++ [q_0,q_0] in
+    let tape' = map (\[q0,q1,q2] -> delta q0 q1 q2) . windowed 3 $ tapePadded in
+    let pad = (length . takeWhile (== q_0) $ tape') - 1 in
+    let tape'Unpadded = reverse . dropWhile (== q_0) . reverse . dropWhile (== q_0) $ tape' in
+    if tape'Unpadded == tape && pad == 0
        then Nothing
-       else Just (qs'Unpadded, pad)
-
-run :: (Eq a, Tape a) => Configuration a -> Int -> IO ()
-run (a,tape) padding = do
-    n <- loop a (printTape padding tape) tape padding 1
-    putStrLn $ "Halted after " ++ show n ++ " steps"
-    where
-    loop a lastOut tape padding n = do
-        let out = printTape padding tape
-        sequence_ $ zipWith diffOut lastOut out
-        threadDelay 300000
-        case step a tape of
-            Just (tape',padding') -> loop a out tape' (padding + padding') (n+1)
-            Nothing -> return n
-
-    printTape padding = map (take 70 . pad padding) . bracketizeLines . tapeShow
-    pad n = drop (-n) . (replicate n ' ' ++)
-
-
--- 110
-
-
-instance MultiShow Int where
-    multiShow 0 = [" "]
-    multiShow x = [show x]
-
-rule :: Int -> Automaton Int
-rule n = Automaton {
-        q_0 = 0,
-        delta = delta
-    } where
-        delta q0 q1 q2 = if testBit n (q0*4+q1*2+q2) then 1 else 0
-
-turing = run (rule 110,[1]) 60
-
-
--- generic stack/queue
-
-
-data StackCmd s = Nop | Pop | Push s deriving (Eq)
-
-data StackLike q s = StackLike {
-    aut :: Automaton q,
-    cell1 :: StackCmd s -> q -> q -> q,
-    gamma :: q -> Maybe s
-}
-
-fromAutomaton :: Automaton q -> (StackCmd s -> q) -> (q -> Maybe s) -> StackLike q s
-fromAutomaton aut liftCmd unliftState = StackLike {
-    aut = aut,
-    cell1 = (delta aut) . liftCmd,
-    gamma = \q1 -> unliftState $ (delta aut) (liftCmd Pop) q1 (q_0 aut)
-}
-
-shiftAutomaton q_0 = Automaton {
-        delta = delta,
-        q_0 = q_0
-    } where
-        delta q0 _ _ = q0
-
-
-instance MultiShow (StackCmd Char) where
-    multiShow Nop = [" "]
-    multiShow Pop = ["<"]
-    multiShow (Push c) = multiShow c
-
-parseCmd :: Char -> StackCmd Char
-parseCmd ' ' = Nop
-parseCmd '<' = Pop
-parseCmd c   = Push c
-
--- test a stack-like data structure by putting 'cmds' on the left
--- side of the tape and feeding the stack-like one by one
-testStackLike :: (Eq q, Eq s) => StackLike q s -> [StackCmd s] -> Configuration (Either (StackCmd s) q)
-testStackLike stack cmds = (a,tape) where
-    a = concatAutomata (shiftAutomaton Nop) (aut stack) cell0 (cell1 stack)
-    cell0 q0 _ _ = q0
-    tape = map Left cmds ++ [Right . q_0 . aut $ stack]
-
-instance (MultiShow a, MultiShow b) => Tape (Either a b) where
-    tapeShow = padTranspose . map (col . reverse) . inits where
-        col (Right b:Left _:_) = map ("|"++) $ multiShow b
-        col [Right b] = map ("|"++) $ multiShow b
-        col (Left a:_) = multiShow a
-        col (Right b:_) = multiShow b
-        col [] = []
-
-
--- reverse
-
-
-instance MultiShow (Maybe Char) where
-    multiShow (Just c) = multiShow c
-    multiShow Nothing  = [" "]
-
-instance (MultiShow a, MultiShow b) => MultiShow (a,b) where
-    multiShow (x,y) = multiShow x ++ multiShow y
-
-reverseString s = run (Automaton {
-    q_0 = (Nothing,Nothing),
-    delta = delta
-    },map ((, Just ' ') . Just) s) 20
-    where
-        deltaTop :: Delta (Maybe Char)
-        deltaTop _ (Just ' ') (Just c) = Just c
-        deltaTop (Just ' ') (Just _) _ = Just ' '
-        deltaTop _ q0 _ = q0
-
-        deltaCrossover :: Delta (Maybe Char, Maybe Char)
-        deltaCrossover (Nothing,Nothing) (Just c,Just ' ') _ = (Just ' ',Just c)
-        deltaCrossover _ q0 _ = q0
-
-        delta = deltaCrossover `eitherDelta` (deltaTop `cartesianDelta` reverseDelta deltaTop)
+       else Just ((a,tape'Unpadded), pad)

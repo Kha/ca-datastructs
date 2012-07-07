@@ -3,9 +3,11 @@
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE OverlappingInstances #-}
 
-module Tape2 (stack2) where
+module CA.StackLike.Tape2 (stack2,queue2) where
 
 import CA
+import CA.Output
+import CA.StackLike
 import Data.Char
 import Data.Maybe
 

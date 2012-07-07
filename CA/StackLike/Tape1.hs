@@ -1,9 +1,11 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverlappingInstances #-}
 
-module Tape1 (stack1) where
+module CA.StackLike.Tape1 (stack1) where
 
 import CA
+import CA.Output
+import CA.StackLike
 import Data.Char
 
 data Dir = L Int | N | R deriving (Eq,Show)
@@ -14,6 +16,7 @@ instance MultiShow (Char,Dir) where
     multiShow (c,N) = multiShow c
     multiShow (c,R) = [[toUpper c]]
 
+stack1 :: StackLike (Char,Dir) Char
 stack1 = fromAutomaton (Automaton {
         q_0 = (' ',N),
         delta = delta
