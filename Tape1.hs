@@ -6,34 +6,37 @@ module Tape1 (stack1) where
 import CA
 import Data.Char
 
-data Dir = L | N | R | R' deriving (Eq, Show)
+data Dir = L Int | N | R deriving (Eq,Show)
 
-instance MultiShow (Char, Dir) where
-    multiShow (_,L) = ["<"]
-    multiShow (c,N) = [[c]]
-    multiShow (c,_) = [[toUpper c]]
+instance MultiShow (Char,Dir) where
+    multiShow (c,L 0) = ["<"]
+    multiShow (c,L _) = ["«"]
+    multiShow (c,N) = multiShow c
+    multiShow (c,R) = [[toUpper c]]
 
-stack1 cmds = runStack (Automaton {
-    q_0 = (' ',N),
-    delta = delta
-    }) execCmd cmds
+stack1 = fromAutomaton (Automaton {
+        q_0 = (' ',N),
+        delta = delta
+    }) liftCmd unliftState
     where
-        execCmd Pop _ _ = (' ',L)
-        execCmd _ (_,L) _ = (' ',N)
+        liftCmd Pop = (' ',L 0)
+        liftCmd Nop = (' ',R)
+        liftCmd (Push c) = (c,R)
 
-        execCmd (Push a) _ _ = (a,R)
-        execCmd _ (b,R) (_,_) = (b,R')
-        execCmd _ (_,R') (_,N) = (' ',N)
+        unliftState (_,L _) = Nothing
+        unliftState (a,_)   = Just a
 
-        execCmd _ q1 _ = q1
+        delta0 _ (_,R) _ = (' ',N) -- push source
+        delta0 _ q1 _ = q1
 
-        delta (a,R) (' ',N) _ = (a,N)
-        delta (_,R) (b,N) _ = (b,R)
-        delta _ (b,R) _ = (b,R')
-        delta (a,_) (_,R') (_,N) = (a,N)
+        delta1 (c,R) (' ',_) _ = (c,N) -- push dest
+        delta1 (c1,d) (c2,N) _ | (c1 /= ' ' || d == R) && c2 /= ' ' = (c2,R) -- push source choose
+        delta1 _ q1 _ = q1
 
-        delta (_,L) (' ',N) _ = (' ',N)
-        delta (_,L) _ (c,_)   = (c,L)
-        delta _ (b,L) _       = (b,N)
+        delta2 (_,L 2) (' ',_) (' ',_) = (' ',N)
+        delta2 (_,L i) (' ',_) (' ',_) = (' ',L $ i+1)
+        delta2 (_,L _) _ _ = (' ',L 0)
+        delta2 _ (_,L _) (c,_) = (c,N)
+        delta2 _ q1 _ = q1
 
-        delta _ q1 _ = q1
+        delta = delta2 `composeDelta` delta1 `composeDelta` delta0

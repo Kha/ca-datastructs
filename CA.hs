@@ -28,10 +28,12 @@ eitherDelta d0 d1 q0 q1 q2 =
     let q1' = d0 q0 q1 q2 in
     if q1' == q1 then d1 q0 q1 q2 else q1'
 
-data Automaton a = Automaton {
-    q_0 :: a,
-    delta :: Delta a
+data Automaton q = Automaton {
+    q_0 :: q,
+    delta :: Delta q
 }
+
+type Configuration q = (Automaton q, [q])
 
 concatAutomata :: (Eq a, Eq b) => Automaton a -> Automaton b -> (a -> a -> b -> a) -> (a -> b -> b -> b) -> Automaton (Either a b)
 concatAutomata Automaton { q_0 = q0_0, delta = delta0 } Automaton { q_0 = q1_0, delta = delta1 } transLeft transRight = Automaton {
@@ -111,8 +113,8 @@ step Automaton { q_0 = q_0, delta = delta } qs =
        then Nothing
        else Just (qs'Unpadded, pad)
 
-run :: (Eq a, Tape a) => Automaton a -> [a] -> Int -> IO ()
-run a tape padding = do
+run :: (Eq a, Tape a) => Configuration a -> Int -> IO ()
+run (a,tape) padding = do
     n <- loop a (printTape padding tape) tape padding 1
     putStrLn $ "Halted after " ++ show n ++ " steps"
     where
@@ -142,10 +144,51 @@ rule n = Automaton {
     } where
         delta q0 q1 q2 = if testBit n (q0*4+q1*2+q2) then 1 else 0
 
-turing = run (rule 110) [1] 60
+turing = run (rule 110,[1]) 60
 
 
--- generic stack
+-- generic stack/queue
+
+
+data StackCmd s = Nop | Pop | Push s deriving (Eq)
+
+data StackLike q s = StackLike {
+    aut :: Automaton q,
+    cell1 :: StackCmd s -> q -> q -> q,
+    gamma :: q -> Maybe s
+}
+
+fromAutomaton :: Automaton q -> (StackCmd s -> q) -> (q -> Maybe s) -> StackLike q s
+fromAutomaton aut liftCmd unliftState = StackLike {
+    aut = aut,
+    cell1 = (delta aut) . liftCmd,
+    gamma = \q1 -> unliftState $ (delta aut) (liftCmd Pop) q1 (q_0 aut)
+}
+
+shiftAutomaton q_0 = Automaton {
+        delta = delta,
+        q_0 = q_0
+    } where
+        delta q0 _ _ = q0
+
+
+instance MultiShow (StackCmd Char) where
+    multiShow Nop = [" "]
+    multiShow Pop = ["<"]
+    multiShow (Push c) = multiShow c
+
+parseCmd :: Char -> StackCmd Char
+parseCmd ' ' = Nop
+parseCmd '<' = Pop
+parseCmd c   = Push c
+
+-- test a stack-like data structure by putting 'cmds' on the left
+-- side of the tape and feeding the stack-like one by one
+testStackLike :: (Eq q, Eq s) => StackLike q s -> [StackCmd s] -> Configuration (Either (StackCmd s) q)
+testStackLike stack cmds = (a,tape) where
+    a = concatAutomata (shiftAutomaton Nop) (aut stack) cell0 (cell1 stack)
+    cell0 q0 _ _ = q0
+    tape = map Left cmds ++ [Right . q_0 . aut $ stack]
 
 instance (MultiShow a, MultiShow b) => Tape (Either a b) where
     tapeShow = padTranspose . map (col . reverse) . inits where
@@ -155,32 +198,6 @@ instance (MultiShow a, MultiShow b) => Tape (Either a b) where
         col (Right b:_) = multiShow b
         col [] = []
 
-shiftAutomaton q_0 = Automaton {
-        delta = delta,
-        q_0 = q_0
-    } where
-        delta q0 _ _ = q0
-
-data StackCmd = Nop | Pop | Push Char deriving (Eq)
-
-instance MultiShow StackCmd where
-    multiShow Nop = [" "]
-    multiShow Pop = ["<"]
-    multiShow (Push c) = multiShow c
-
-parseCmd :: Char -> StackCmd
-parseCmd ' ' = Nop
-parseCmd '<' = Pop
-parseCmd c   = Push c
-
-runStack a execCmd cmds = run cmdA (cmds' ++ [Right (q_0 a)]) 1 where
-    cmdA = concatAutomata (shiftAutomaton Nop) a transLeft execCmd
-    cmds' = map (Left . parseCmd) cmds
-    transLeft q0 _ _ = q0
-
-runStack1 a liftCmd cmds = run cmdA (cmds' ++ [Right (q_0 a)]) 1 where
-    cmdA = concatAutomata1 (shiftAutomaton Nop) a (const Nop) liftCmd
-    cmds' = map (Left . parseCmd) cmds
 
 -- reverse
 
@@ -195,7 +212,7 @@ instance (MultiShow a, MultiShow b) => MultiShow (a,b) where
 reverseString s = run (Automaton {
     q_0 = (Nothing,Nothing),
     delta = delta
-    }) (map ((, Just ' ') . Just) s) 20
+    },map ((, Just ' ') . Just) s) 20
     where
         deltaTop :: Delta (Maybe Char)
         deltaTop _ (Just ' ') (Just c) = Just c

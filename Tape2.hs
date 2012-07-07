@@ -7,35 +7,46 @@ module Tape2 (stack2) where
 
 import CA
 import Data.Char
+import Data.Maybe
 
-stack2 cmds = runStack1 (Automaton {
-    q_0 = (' ',' '),
-    delta = delta
-    }) liftCmd cmds
+instance MultiShow [Char] where
+    multiShow = map (:[]) . pad 2 ' '
+
+stack2 = fromAutomaton (Automaton {
+        q_0 = [],
+        delta = delta
+    }) liftCmd unliftState
     where
-        liftCmd Pop = (' ',' ')
-        liftCmd (Push a) = ('x',a)
-        liftCmd Nop = ('x',' ')
+        liftCmd (Push a) = ['x',a]
+        liftCmd Pop = []
+        liftCmd Nop = ['x']
 
-        delta0 _ (b1,b2) _ = (b1,' ') -- push source
+        unliftState = listToMaybe
 
-        delta1 (' ',' ') (b1,_) _ = (' ',' ') -- pop source
-        delta1 _ (' ',' ') (c1,_) = (c1,' ') -- pop dest
+        delta0 _ bs _ = one bs -- push source
+
+        delta1 [] _ _ = [] -- pop source
+        delta1 _ [] cs = one cs -- pop dest
         delta1 _ q1 _ = q1
 
-        delta2 (a1,a2) (b1,_) _ | a2 /= ' ' = (a2,b1) -- push dest
+        delta2 [a1,a2] bs _ = a2:one bs -- push dest
         delta2 _ q1 _ = q1
+
+        one = take 1
 
         delta = delta2 `composeDelta` delta1 `composeDelta` delta0
 
-queue2 cmds = runStack1 (Automaton {
+queue2 = fromAutomaton (Automaton {
     q_0 = (' ',' '),
     delta = delta
-    }) liftCmd cmds
+    }) liftCmd unliftState
     where
         liftCmd Pop = (' ',' ')
         liftCmd (Push a) = ('x',a)
         liftCmd Nop = ('x',' ')
+
+        unliftState (' ',_) = Nothing
+        unliftState (a,_)   = Just a
 
         delta0 _ (' ',b) (a,_) = (a,b) -- pop dest
         delta0 (' ',_) (_,b) _ = (' ',b) -- pop source
