@@ -26,10 +26,10 @@ data StackLike q s = StackLike {
 }
 
 fromAutomaton :: Automaton q -> (StackCmd s -> q) -> (q -> Maybe s) -> StackLike q s
-fromAutomaton aut liftCmd unliftState = StackLike {
+fromAutomaton aut liftCmd gamma = StackLike {
     aut = aut,
     cell1 = (delta aut) . liftCmd,
-    gamma = \q1 -> unliftState $ (delta aut) (liftCmd Pop) q1 (q_0 aut)
+    gamma = gamma
 }
 
 shiftAutomaton q_0 = Automaton {

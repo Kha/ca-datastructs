@@ -7,19 +7,20 @@ import CA.Output
 import CA.StackLike
 import Data.Maybe
 
-instance MultiShow [Char] where
-    multiShow = map (:[]) . pad 3 ' '
+instance MultiShow a => MultiShow [a] where
+    multiShow = pad 3 " " . map (pad 1 ' ' . head . multiShow)
 
-stack3 = fromAutomaton (Automaton {
+stack3 :: (Eq s) => s -> StackLike [s] s
+stack3 sample = fromAutomaton (Automaton {
         q_0 = [],
         delta = delta
-    }) liftCmd unliftState
+    }) liftCmd gamma
     where
-        liftCmd (Push a) = ['x','x',a]
+        liftCmd (Push a) = [sample,sample,a]
         liftCmd Pop = []
-        liftCmd Nop = ['x','x']
+        liftCmd Nop = [sample,sample]
 
-        unliftState = listToMaybe
+        gamma = listToMaybe
 
         delta0 as bs _ = two bs -- push source
 
@@ -42,13 +43,13 @@ instance MultiShow ([Char], Maybe Char) where
 queue3 = fromAutomaton (Automaton {
         q_0 = ([],Nothing),
         delta = delta
-    }) liftCmd unliftState
+    }) liftCmd gamma
     where
         liftCmd (Push a) = (['x','x'],Just a)
         liftCmd Pop = ([],Nothing)
         liftCmd Nop = (['x','x'],Nothing)
 
-        unliftState = listToMaybe . fst
+        gamma = listToMaybe . fst
 
         delta0 _ (cs,d) (a:_,_) | length cs <= 1 = (cs++[a],d) -- pop dest
         delta0 _ q1 _ = q1
