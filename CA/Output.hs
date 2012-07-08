@@ -57,19 +57,21 @@ printTape :: (Tape a) => Int -> [a] -> [String]
 printTape padding = map (take 70 . padString padding) . bracketizeLines . tapeShow where
     padString n = drop (-n) . (replicate n ' ' ++)
 
-runWithPrint :: (Eq a) => (Int -> [a] -> [String]) -> Configuration a -> Int -> IO ()
-runWithPrint printTape (a,tape) padding = do
-    n <- loop a (printTape padding tape) tape padding 1
+runWithOptions :: (Eq a) => Bool -> (Int -> [a] -> [String]) -> Configuration a -> Int -> IO ()
+runWithOptions pause printTape (a,tape) padding = do
+    n <- loop pause a (printTape padding tape) tape padding 1
     putStrLn $ "Halted after " ++ show n ++ " steps"
     where
         --loop :: (Eq b) => Automaton b -> [String] -> [b] -> Int -> Int -> IO Int
-        loop a lastOut tape padding n = do
+        loop pause a lastOut tape padding n = do
             let out = printTape padding tape
             sequence_ $ zipWith diffOut lastOut out
-            threadDelay 300000
+            pause <- if pause
+                then getChar >>= return . (== ' ')
+                else threadDelay 300000 >> return False
             case step (a,tape) of
-                Just ((a,tape'),padding') -> loop a out tape' (padding + padding') (n+1)
+                Just ((a,tape'),padding') -> loop pause a out tape' (padding + padding') (n+1)
                 Nothing -> return n
 
 run :: (Eq a, Tape a) => Configuration a -> Int -> IO ()
-run c padding = runWithPrint printTape c padding
+run c padding = runWithOptions False printTape c padding

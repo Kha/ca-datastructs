@@ -6,6 +6,9 @@ module CA.StackLike where
 import CA
 import CA.Output
 import Data.List
+import System.IO
+import Control.Concurrent
+import Control.Monad
 
 data StackCmd s = Nop | Pop | Push s deriving (Eq)
 
@@ -53,3 +56,18 @@ instance (MultiShow a, MultiShow b) => Tape (Either a b) where
         col (Left a:_) = multiShow a
         col (Right b:_) = multiShow b
         col [] = []
+
+interactiveStackLike :: (Eq q, Tape q) => StackLike q Char -> [q] -> IO ()
+interactiveStackLike stack tape = do
+    hSetEcho stdin False
+    loop True (aut stack,tape) (printTape 10 tape) where
+    loop pause c@(_,tape) lastOut = do
+        let out = printTape 0 tape
+        when (not pause) $ sequence_ $ zipWith diffOut lastOut out
+        input <- (\ready -> ready || pause) `fmap` hReady stdin
+        cmd <- if not input then return Nop else
+            (\c -> if c == 'x' then Pop else Push c) `fmap` getChar
+        threadDelay 600000
+        case stepNatural c ((cell1 stack) cmd) of
+            Nothing -> loop True c out
+            Just c' -> loop False c' out

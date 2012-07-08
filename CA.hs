@@ -65,3 +65,12 @@ step (a @ Automaton { q_0 = q_0, delta = delta },tape) =
     if tape'Unpadded == tape && pad == 0
        then Nothing
        else Just ((a,tape'Unpadded), pad)
+
+stepNatural :: Eq a => Configuration a -> (a -> a -> a) -> Maybe (Configuration a)
+stepNatural (a @ Automaton { q_0 = q_0, delta = delta },tape) delta1 =
+    let tapePadded = tape ++ [q_0,q_0] in
+    let tape' = delta1 (tapePadded !! 0) (tapePadded !! 1) : (map (\[q0,q1,q2] -> delta q0 q1 q2) . windowed 3 $ tapePadded) in
+    let tape'Unpadded = reverse . dropWhile (== q_0) . reverse $ tape' in
+    if tape'Unpadded == tape
+       then Nothing
+       else Just (a,tape'Unpadded)

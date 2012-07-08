@@ -113,10 +113,12 @@ busy3 = DTM { qs_T = [A,B,C,H], sigma_T = [0,1], blank_T = 0, delta_T = delta, q
     delta C 1 = (A,1,L)
     delta H a = (H,a,N)
 
-runBusy3 = runWithPrint printTape (simulateDTM busy3 (stack3 42) []) 5 where
+runBusy3 = runWithOptions True printTape (simulateDTM busy3 (stack3 42) []) 5 where
     printTape _ tape = [left ++ show a ++ right, replicate (length left) ' ' ++ show q] where
         left = reverse . pad 10 ' ' . concat . map (concat . map show) . reverse . lefts $ tape
         right = concat . map (concat . map show) . rights . rights $ tape
         (q,a) = head . lefts . rights $ tape
 
 runBusy3' = run (simulateDTM busy3 (stack3 42) []) 5
+
+runInteractive stack = interactiveStackLike stack [q_0 $ aut stack]
