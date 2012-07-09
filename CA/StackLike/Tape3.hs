@@ -11,10 +11,10 @@ instance MultiShow a => MultiShow [a] where
     multiShow = pad 3 " " . map (pad 1 ' ' . head . multiShow)
 
 stack3 :: (Eq s) => s -> StackLike [s] s
-stack3 sample = fromAutomaton (Automaton {
+stack3 sample = (fromAutomaton Automaton {
         q_0 = [],
         delta = delta
-    }) liftCmd gamma
+    } liftCmd) { gamma = gamma }
     where
         liftCmd (Push a) = [sample,sample,a]
         liftCmd Pop = []
@@ -40,10 +40,10 @@ stack3 sample = fromAutomaton (Automaton {
 instance MultiShow ([Char], Maybe Char) where
     multiShow (cs,d) = map (:[]) $ pad 2 ' ' cs ++ [fromMaybe ' ' d]
 
-queue3 = fromAutomaton (Automaton {
+queue3 = (fromAutomaton Automaton {
         q_0 = ([],Nothing),
         delta = delta
-    }) liftCmd gamma
+    } liftCmd) { gamma = gamma }
     where
         liftCmd (Push a) = (['x','x'],Just a)
         liftCmd Pop = ([],Nothing)

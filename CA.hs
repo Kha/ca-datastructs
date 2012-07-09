@@ -25,7 +25,7 @@ data Automaton q = Automaton {
     delta :: Delta q
 }
 
-type Configuration q = (Automaton q, [q])
+type AutWithTape q = (Automaton q,[q])
 
 concatAutomata :: (Eq a, Eq b) => Automaton a -> Automaton b -> (a -> a -> b -> a) -> (a -> b -> b -> b) -> Automaton (Either a b)
 concatAutomata Automaton { q_0 = q0_0, delta = delta0 } Automaton { q_0 = q1_0, delta = delta1 } transLeft transRight = Automaton {
@@ -56,21 +56,19 @@ windowed size xs@(x:xs') = case take size xs of
 pad :: Int -> a -> [a] -> [a]
 pad n x xs = xs ++ replicate (n - length xs) x
 
-step :: Eq a => Configuration a -> Maybe (Configuration a, Int)
-step (a @ Automaton { q_0 = q_0, delta = delta },tape) =
+step :: Eq a => Automaton a -> [a] -> Maybe ([a],Int)
+step Automaton { q_0 = q_0, delta = delta } tape =
     let tapePadded = [q_0,q_0] ++ tape ++ [q_0,q_0] in
     let tape' = map (\[q0,q1,q2] -> delta q0 q1 q2) . windowed 3 $ tapePadded in
     let pad = (length . takeWhile (== q_0) $ tape') - 1 in
     let tape'Unpadded = reverse . dropWhile (== q_0) . reverse . dropWhile (== q_0) $ tape' in
     if tape'Unpadded == tape && pad == 0
        then Nothing
-       else Just ((a,tape'Unpadded), pad)
+       else Just (tape'Unpadded, pad)
 
-stepNatural :: Eq a => Configuration a -> (a -> a -> a) -> Maybe (Configuration a)
-stepNatural (a @ Automaton { q_0 = q_0, delta = delta },tape) delta1 =
+stepNatural :: Eq a => Automaton a -> (a -> a -> a) -> [a] -> [a]
+stepNatural Automaton { q_0 = q_0, delta = delta } delta1 tape =
     let tapePadded = tape ++ [q_0,q_0] in
     let tape' = delta1 (tapePadded !! 0) (tapePadded !! 1) : (map (\[q0,q1,q2] -> delta q0 q1 q2) . windowed 3 $ tapePadded) in
     let tape'Unpadded = reverse . dropWhile (== q_0) . reverse $ tape' in
-    if tape'Unpadded == tape
-       then Nothing
-       else Just (a,tape'Unpadded)
+    tape'Unpadded

@@ -25,7 +25,7 @@ rule n = Automaton {
     } where
         delta q0 q1 q2 = if testBit n (q0*4+q1*2+q2) then 1 else 0
 
-rule110 = run (rule 110,[1]) 60
+rule110 = run (rule 110) [1] 60
 
 -- reverse
 
@@ -36,10 +36,10 @@ instance MultiShow (Maybe Char) where
 instance (MultiShow a, MultiShow b) => MultiShow (a,b) where
     multiShow (x,y) = multiShow x ++ multiShow y
 
-reverseString s = run (Automaton {
+reverseString s = run Automaton {
     q_0 = (Nothing,Nothing),
     delta = delta
-    },map ((, Just ' ') . Just) s) 20
+    } (map ((, Just ' ') . Just) s) 20
     where
         deltaTop :: Delta (Maybe Char)
         deltaTop _ (Just ' ') (Just c) = Just c
@@ -70,7 +70,7 @@ instance (MultiShow q', Show q, Show s) => Tape (Either q' (Either (q,s) q')) wh
         mmultiShow (Right (Left (q,a))) = [show a, show q]
         mmultiShow (Right (Right q')) = multiShow q'
 
-simulateDTM :: (Eq q, Eq s, Eq q') => DTM q s -> StackLike q' s -> [s] -> Configuration (Either q' (Either (q,s) q'))
+simulateDTM :: (Eq q, Eq s, Eq q') => DTM q s -> StackLike q' s -> [s] -> AutWithTape (Either q' (Either (q,s) q'))
 simulateDTM tm stack tape = (a,tape') where
     a = concatAutomata revStack (concatAutomata head (aut stack) undefined delta1) deltaM1 delta0
     tape' = [Left (q_0 $ aut stack), Right (Left (q_0_T tm,blank_T tm)), Right (Right (q_0 $ aut stack))] --Right (Left (q_0_T tm,fromMaybe (blank_T tm) $ listToMaybe tape)) : map (Right . Right)
@@ -113,12 +113,18 @@ busy3 = DTM { qs_T = [A,B,C,H], sigma_T = [0,1], blank_T = 0, delta_T = delta, q
     delta C 1 = (A,1,L)
     delta H a = (H,a,N)
 
-runBusy3 = runWithOptions True printTape (simulateDTM busy3 (stack3 42) []) 5 where
+runBusy3 = runWithOptions a True printTape tape 5 where
+    (a,tape) = simulateDTM busy3 (stack3 42) []
     printTape _ tape = [left ++ show a ++ right, replicate (length left) ' ' ++ show q] where
         left = reverse . pad 10 ' ' . concat . map (concat . map show) . reverse . lefts $ tape
         right = concat . map (concat . map show) . rights . rights $ tape
         (q,a) = head . lefts . rights $ tape
 
-runBusy3' = run (simulateDTM busy3 (stack3 42) []) 5
+runBusy3' = run a tape 5 where
+    (a,tape) = simulateDTM busy3 (stack3 42) []
 
-runInteractive stack = interactiveStackLike stack [q_0 $ aut stack]
+fixThis :: (Eq a) => (a -> a) -> a -> a
+fixThis f x | x == f x  = x
+            | otherwise = fixThis f (f x)
+
+runInteractive stack = interactiveStackLike stack . fixThis (delta' stack Nop) . pushMany stack "proseminar" $ []

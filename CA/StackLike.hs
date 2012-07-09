@@ -6,6 +6,7 @@ module CA.StackLike where
 import CA
 import CA.Output
 import Data.List
+import Data.Monoid
 import System.IO
 import Control.Concurrent
 import Control.Monad
@@ -25,14 +26,32 @@ parseCmd c   = Push c
 data StackLike q s = StackLike {
     aut :: Automaton q,
     cell1 :: StackCmd s -> q -> q -> q,
-    gamma :: q -> Maybe s
+    gamma :: q -> Maybe s,
+    pushBubble :: Int,
+    popBubble :: Int
 }
 
-fromAutomaton :: Automaton q -> (StackCmd s -> q) -> (q -> Maybe s) -> StackLike q s
-fromAutomaton aut liftCmd gamma = StackLike {
+delta' :: (Eq q) => StackLike q s -> StackCmd s -> [q] -> [q]
+delta' stack cmd = stepNatural (aut stack) (cell1 stack cmd)
+
+endoPower :: (a -> a) -> Int -> (a -> a)
+endoPower f n = appEndo . mconcat . replicate n . Endo $ f
+
+deltaStar :: (Eq q) => StackLike q s -> StackCmd s -> [q] -> [q]
+deltaStar stack Nop = delta' stack Nop
+deltaStar stack (Push a) = delta' stack (Push a) . endoPower (delta' stack Nop) (pushBubble stack)
+deltaStar stack Pop = delta' stack Pop . endoPower (delta' stack Nop) (popBubble stack)
+
+pushMany :: (Eq q) => StackLike q s -> [s] -> [q] -> [q]
+pushMany stack = appEndo . mconcat . map (Endo . deltaStar stack . Push) . reverse
+
+fromAutomaton :: Automaton q -> (StackCmd s -> q) -> StackLike q s
+fromAutomaton aut liftCmd = StackLike {
     aut = aut,
     cell1 = (delta aut) . liftCmd,
-    gamma = gamma
+    gamma = undefined,
+    pushBubble = 0,
+    popBubble = 0
 }
 
 shiftAutomaton q_0 = Automaton {
@@ -43,7 +62,7 @@ shiftAutomaton q_0 = Automaton {
 
 -- test a stack-like data structure by putting 'cmds' on the left
 -- side of the tape and feeding the stack-like one by one
-testStackLike :: (Eq q, Eq s) => StackLike q s -> [StackCmd s] -> Configuration (Either (StackCmd s) q)
+testStackLike :: (Eq q, Eq s) => StackLike q s -> [StackCmd s] -> AutWithTape (Either (StackCmd s) q)
 testStackLike stack cmds = (a,tape) where
     a = concatAutomata (shiftAutomaton Nop) (aut stack) cell0 (cell1 stack)
     cell0 q0 _ _ = q0
@@ -60,14 +79,14 @@ instance (MultiShow a, MultiShow b) => Tape (Either a b) where
 interactiveStackLike :: (Eq q, Tape q) => StackLike q Char -> [q] -> IO ()
 interactiveStackLike stack tape = do
     hSetEcho stdin False
-    loop True (aut stack,tape) (printTape 10 tape) where
-    loop pause c@(_,tape) lastOut = do
+    loop False tape (printTape 10 tape) where
+    loop pause tape lastOut = do
         let out = printTape 0 tape
         when (not pause) $ sequence_ $ zipWith diffOut lastOut out
         input <- (\ready -> ready || pause) `fmap` hReady stdin
         cmd <- if not input then return Nop else
-            (\c -> if c == 'x' then Pop else Push c) `fmap` getChar
+            (\a -> if a == 'x' then Pop else Push a) `fmap` getChar
         threadDelay 600000
-        case stepNatural c ((cell1 stack) cmd) of
-            Nothing -> loop True c out
-            Just c' -> loop False c' out
+        case delta' stack cmd tape of
+            tape' | tape' == tape -> loop True tape' out
+            tape' -> loop False tape' out
