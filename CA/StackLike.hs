@@ -1,5 +1,6 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverlappingInstances #-}
+{-# LANGUAGE TupleSections #-}
 
 module CA.StackLike where
 
@@ -11,7 +12,7 @@ import System.IO
 import Control.Concurrent
 import Control.Monad
 
-data StackCmd s = Nop | Pop | Push s deriving (Eq)
+data StackCmd s = Nop | Pop | Push s deriving (Eq, Show)
 
 instance MultiShow (StackCmd Char) where
     multiShow Nop = [" "]
@@ -31,19 +32,26 @@ data StackLike q s = StackLike {
     popBubble :: Int
 }
 
+gamma' :: StackLike q s -> [q] -> Maybe s
+gamma' stack [] = Nothing
+gamma' stack (q:_) = gamma stack q
+
 delta' :: (Eq q) => StackLike q s -> StackCmd s -> [q] -> [q]
 delta' stack cmd = stepNatural (aut stack) (cell1 stack cmd)
 
 endoPower :: (a -> a) -> Int -> (a -> a)
 endoPower f n = appEndo . mconcat . replicate n . Endo $ f
 
-deltaStar :: (Eq q) => StackLike q s -> StackCmd s -> [q] -> [q]
-deltaStar stack Nop = delta' stack Nop
-deltaStar stack (Push a) = delta' stack (Push a) . endoPower (delta' stack Nop) (pushBubble stack)
-deltaStar stack Pop = delta' stack Pop . endoPower (delta' stack Nop) (popBubble stack)
+deltaPushStar stack a = delta' stack (Push a) . endoPower (delta' stack Nop) (pushBubble stack)
+deltaPopStar stack tape = (gamma' stack bubbled,delta' stack Pop $ bubbled) where
+    bubbled = endoPower (delta' stack Nop) (popBubble stack) tape
 
 pushMany :: (Eq q) => StackLike q s -> [s] -> [q] -> [q]
-pushMany stack = appEndo . mconcat . map (Endo . deltaStar stack . Push) . reverse
+pushMany stack = appEndo . mconcat . map (Endo . deltaPushStar stack) . reverse
+
+bigGamma stack tape = case deltaPopStar stack tape of
+    (Nothing,_) -> []
+    (Just a,tape') -> a : bigGamma stack tape'
 
 fromAutomaton :: Automaton q -> (StackCmd s -> q) -> StackLike q s
 fromAutomaton aut liftCmd = StackLike {

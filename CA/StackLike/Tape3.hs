@@ -10,15 +10,15 @@ import Data.Maybe
 instance MultiShow a => MultiShow [a] where
     multiShow = pad 3 " " . map (pad 1 ' ' . head . multiShow)
 
-stack3 :: (Eq s) => s -> StackLike [s] s
-stack3 sample = (fromAutomaton Automaton {
+stack3 :: (Eq s) => StackLike [s] s
+stack3 = (fromAutomaton Automaton {
         q_0 = [],
         delta = delta
     } liftCmd) { gamma = gamma }
     where
-        liftCmd (Push a) = [sample,sample,a]
+        liftCmd (Push a) = [undefined, undefined, a]
         liftCmd Pop = []
-        liftCmd Nop = [sample,sample]
+        liftCmd Nop = [undefined,undefined]
 
         gamma = listToMaybe
 
