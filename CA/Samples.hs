@@ -8,6 +8,8 @@ import CA
 import CA.Output
 import CA.StackLike
 import CA.StackLike.Tape3
+import CA.StackLike.Tape2
+import CA.StackLike.Tape1
 import Data.Bits
 import Data.Maybe
 import Data.Either
@@ -113,15 +115,15 @@ busy3 = DTM { qs_T = [A,B,C,H], sigma_T = [0,1], blank_T = 0, delta_T = delta, q
     delta C 1 = (A,1,L)
     delta H a = (H,a,N)
 
-runBusy3 = runWithOptions a True printTape tape 5 where
-    (a,tape) = simulateDTM busy3 (stack3 42) []
-    printTape _ tape = [left ++ show a ++ right, replicate (length left) ' ' ++ show q] where
-        left = reverse . pad 10 ' ' . concat . map (concat . map show) . reverse . lefts $ tape
+runBusy3 = runWithOptions a True printTape tape 0 where
+    (a,tape) = simulateDTM busy3 stack3 []
+    printTape _ tape = map (replicate (10 - length left) ' ' ++) . bracketizeLines $ [left ++ show a ++ right, replicate (length left) ' ' ++ show q ++ replicate (length right) ' '] where
+        left = reverse . concat . map (concat . map show) . reverse . lefts $ tape
         right = concat . map (concat . map show) . rights . rights $ tape
         (q,a) = head . lefts . rights $ tape
 
 runBusy3' = run a tape 5 where
-    (a,tape) = simulateDTM busy3 (stack3 42) []
+    (a,tape) = simulateDTM busy3 stack3 []
 
 fixThis :: (Eq a) => (a -> a) -> a -> a
 fixThis f x | x == f x  = x

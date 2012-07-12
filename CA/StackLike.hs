@@ -7,6 +7,7 @@ module CA.StackLike where
 import CA
 import CA.Output
 import Data.List
+import Data.Maybe
 import Data.Monoid
 import System.IO
 import Control.Concurrent
@@ -87,14 +88,17 @@ instance (MultiShow a, MultiShow b) => Tape (Either a b) where
 interactiveStackLike :: (Eq q, Tape q) => StackLike q Char -> [q] -> IO ()
 interactiveStackLike stack tape = do
     hSetEcho stdin False
-    loop False tape (printTape 10 tape) where
+    loop False tape (printTape 0 tape) where
     loop pause tape lastOut = do
-        let out = printTape 0 tape
-        when (not pause) $ sequence_ $ zipWith diffOut lastOut out
         input <- (\ready -> ready || pause) `fmap` hReady stdin
         cmd <- if not input then return Nop else
             (\a -> if a == 'x' then Pop else Push a) `fmap` getChar
+        let out = printTape 0 tape
+        sequence_ . zipWith (>>) (cmdOut cmd tape) $ zipWith diffOut lastOut out
         threadDelay 600000
         case delta' stack cmd tape of
             tape' | tape' == tape -> loop True tape' out
             tape' -> loop False tape' out
+    cmdOut cmd tape = map putStr $ pad 12 ' ' (showCmd cmd tape) : repeat (replicate 12 ' ')
+    showCmd Pop tape = show (Pop :: StackCmd Char) ++ " => " ++ show (fromMaybe ' ' . gamma stack $ head tape)
+    showCmd cmd _ = show cmd
