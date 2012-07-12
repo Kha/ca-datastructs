@@ -14,13 +14,11 @@ stack3 :: (Eq s) => StackLike [s] s
 stack3 = (fromAutomaton Automaton {
         q_0 = [],
         delta = delta
-    } liftCmd) { gamma = gamma }
+    } liftCmd) { gamma = listToMaybe }
     where
         liftCmd (Push a) = [undefined, undefined, a]
         liftCmd Pop = []
         liftCmd Nop = [undefined,undefined]
-
-        gamma = listToMaybe
 
         delta0 as bs _ = two bs -- push source
 
@@ -43,13 +41,11 @@ instance MultiShow ([Char], Maybe Char) where
 queue3 = (fromAutomaton Automaton {
         q_0 = ([],Nothing),
         delta = delta
-    } liftCmd) { gamma = gamma }
+    } liftCmd) { gamma = listToMaybe . fst }
     where
         liftCmd (Push a) = (['x','x'],Just a)
         liftCmd Pop = ([],Nothing)
         liftCmd Nop = (['x','x'],Nothing)
-
-        gamma = listToMaybe . fst
 
         delta0 _ (cs,d) (a:_,_) | length cs <= 1 = (cs++[a],d) -- pop dest
         delta0 _ q1 _ = q1

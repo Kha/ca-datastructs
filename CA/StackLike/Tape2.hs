@@ -14,16 +14,14 @@ import Data.Maybe
 instance MultiShow [Char] where
     multiShow = map (:[]) . pad 2 ' '
 
-stack2 = fromAutomaton (Automaton {
+stack2 = (fromAutomaton Automaton {
         q_0 = [],
         delta = delta
-    }) liftCmd unliftState
+    } liftCmd) { gamma = listToMaybe, popBubble = 1 }
     where
-        liftCmd (Push a) = ['x',a]
+        liftCmd (Push a) = [undefined,a]
         liftCmd Pop = []
-        liftCmd Nop = ['x']
-
-        unliftState = listToMaybe
+        liftCmd Nop = [undefined]
 
         delta0 _ bs _ = one bs -- push source
 
@@ -38,17 +36,18 @@ stack2 = fromAutomaton (Automaton {
 
         delta = delta2 `composeDelta` delta1 `composeDelta` delta0
 
-queue2 = fromAutomaton (Automaton {
+queue2 = (fromAutomaton Automaton {
     q_0 = (' ',' '),
     delta = delta
-    }) liftCmd unliftState
+    } liftCmd) { gamma = gamma, popBubble = 1 }
     where
         liftCmd Pop = (' ',' ')
         liftCmd (Push a) = ('x',a)
         liftCmd Nop = ('x',' ')
 
-        unliftState (' ',_) = Nothing
-        unliftState (a,_)   = Just a
+        gamma (' ',' ') = Nothing
+        gamma (' ',a) = Just a
+        gamma (a,_) = Just a
 
         delta0 _ (' ',b) (a,_) = (a,b) -- pop dest
         delta0 (' ',_) (_,b) _ = (' ',b) -- pop source

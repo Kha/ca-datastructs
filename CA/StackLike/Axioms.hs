@@ -6,6 +6,8 @@ module CA.StackLike.Axioms where
 import CA
 import CA.StackLike
 import CA.StackLike.Tape3
+import CA.StackLike.Tape2
+import CA.StackLike.Tape1
 import Test.QuickCheck
 import Test.QuickCheck.Test
 
@@ -30,12 +32,17 @@ axiom_nop stack tape = bigGamma stack (delta' stack Nop tape) == bigGamma stack 
 cmdsToTape :: (Eq q) => StackLike q s -> [StackCmd s] -> [q]
 cmdsToTape stack = foldl (flip $ delta' stack) []
 
-prop_push_stack3 = axiom_push stack3 . cmdsToTape stack3
-prop_pop_stack3 = axiom_pop stack3 . cmdsToTape stack3
-prop_nop_stack3 = axiom_nop stack3 . cmdsToTape stack3
-
-prop_enqueue_queue3 = axiom_enqueue queue3 . cmdsToTape queue3
-prop_pop_queue3 = axiom_pop queue3 . cmdsToTape queue3
-prop_nop_queue3 = axiom_nop queue3 . cmdsToTape queue3
+stackProps stack = (f axiom_push,f axiom_pop,f axiom_nop) where
+    f axiom = axiom stack . cmdsToTape stack
+queueProps stack = (f axiom_enqueue,f axiom_pop,f axiom_nop) where
+    f axiom = axiom stack . cmdsToTape stack
 
 check = quickCheckWith $ stdArgs { maxSize = 1000 }
+
+(prop_push_stack3, prop_pop_stack3, prop_nop_stack3) = stackProps stack3
+(prop_push_stack2, prop_pop_stack2, prop_nop_stack2) = stackProps stack2
+--(rop_push_stack1, rop_pop_stack1, rop_nop_stack1) = stackProps stack1
+
+
+(prop_enqueue_queue3, prop_pop_queue3, prop_nop_queue3) = queueProps queue3
+(prop_enqueue_queue2, prop_pop_queue2, prop_nop_queue2) = queueProps queue2

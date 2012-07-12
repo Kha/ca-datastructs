@@ -17,17 +17,18 @@ instance MultiShow (Char,Dir) where
     multiShow (c,R) = [[toUpper c]]
 
 stack1 :: StackLike (Char,Dir) Char
-stack1 = fromAutomaton (Automaton {
+stack1 = (fromAutomaton Automaton {
         q_0 = (' ',N),
         delta = delta
-    }) liftCmd unliftState
+    } liftCmd) { gamma = gamma, pushBubble = 1, popBubble = 2 }
     where
         liftCmd Pop = (' ',L 0)
         liftCmd Nop = (' ',R)
         liftCmd (Push c) = (c,R)
 
-        unliftState (_,L _) = Nothing
-        unliftState (a,_)   = Just a
+        -- doesn't work since cell 1 is usually empty...
+        gamma (' ',_) = Nothing
+        gamma (a,_)   = Just a
 
         delta0 _ (_,R) _ = (' ',N) -- push source
         delta0 _ q1 _ = q1
