@@ -2,12 +2,13 @@
 \documentclass{beamer}
 \useoutertheme[subsection=false,compress,footline=authortitle]{miniframes}
 
-\title{Zellularautomaten: Datenstrukturen}
+\title{Datenstrukturen in Zellularautomaten}
 \author{Sebastian Ullrich}
 \date{Sommersemester 2012}
 
 \usepackage[utf8]{inputenc}
 \usepackage[ngerman]{babel}
+\usepackage{pdfsync}
 
 \usepackage{amsmath,amsfonts}
 \usepackage{tikz}
@@ -30,8 +31,15 @@
 \newcommand{\pushQuelle}{\ensuremath{\mathit{pushQuelle}}}
 \newcommand{\enqueue}{\ensuremath{\mathit{enqueue}}}
 \newcommand{\dequeue}{\ensuremath{\mathit{dequeue}}}
+\newcommand{\shiftUp}{\ensuremath{\mathit{shiftUp}}}
+\newcommand{\demogrid}[1]{
+                    \begin{scope}
+                        \clip (-0.1,-0.1) rectangle (3.5,#1+0.1);
+                        \draw (1) (0,0) grid (4,#1);
+                    \end{scope}}
 
 \setbeamertemplate{headline}{}
+\usenavigationsymbolstemplate{}
 \begin{frame}
     \titlepage
 \end{frame}
@@ -103,7 +111,7 @@
                 \end{tikzpicture}
             \end{center}
             ($\Rightarrow$ \emph{Zipper}-Datenstruktur)
-        \item Simulierung der Übergangsfunktion:
+        \item Simulierung der Überführungsfunktion:
             \begin{itemize}
                 \item $\delta(q,a) = (q',a',N)$:
                     \begin{center}
@@ -153,9 +161,9 @@
 
             $\Rightarrow$ Wir speichern mehrere Symbole in einer Zelle
             \begin{tikzpicture}[every filldraw/.style=lightgray,every node/.style={anchor=base}]
-                \matrix (mym) [row sep=1cm,column sep=1cm] {
-                    \draw[scale=0.4] (1) (0,0) grid (4,3);
-                    \begin{scope}[scale=0.4,xshift=12,yshift=5]
+                \matrix (mym) [row sep=1cm,column sep=1cm,every cell/.style={scale=0.4}] {
+                    \demogrid{3}
+                    \begin{scope}[xshift=12,yshift=5]
                         \node[anchor=east,yshift=3] at (-1,1) { 1. \nop };
                         \node at (0,2) {a};
                         \node at (0,1) {b};
@@ -165,9 +173,9 @@
                     &
 
 
-                    \filldraw[scale=0.4,lightgray] (0,2) rectangle (1,1);
-                    \draw[scale=0.4] (1) (0,0) grid (4,3);
-                    \begin{scope}[scale=0.4,xshift=12,yshift=5]
+                    \filldraw[lightgray] (0,2) rectangle (1,1);
+                    \demogrid{3}
+                    \begin{scope}[xshift=12,yshift=5]
                         \node[anchor=east,yshift=3] at (-1,1) { 2. \pop };
                         \node at (0,2) {b};
                         \node at (1,2) {c};
@@ -175,9 +183,9 @@
                     \end{scope}
                     \\
 
-                    \filldraw[scale=0.4,lightgray] (1,2) rectangle (2,1);
-                    \draw[scale=0.4] (1) (0,0) grid (4,3);
-                    \begin{scope}[scale=0.4,xshift=12,yshift=5]
+                    \filldraw[lightgray] (1,2) rectangle (2,1);
+                    \demogrid{3}
+                    \begin{scope}[xshift=12,yshift=5]
                         \node[anchor=east,yshift=3] at (-1,1) { 3. \nop };
                         \node at (0,2) {b};
                         \node at (0,1) {c};
@@ -185,9 +193,9 @@
                     \end{scope}
                     &
 
-                    \filldraw[scale=0.4,lightgray] (0,2) rectangle (1,3);
-                    \draw[scale=0.4] (1) (0,0) grid (4,3);
-                    \begin{scope}[scale=0.4,xshift=12,yshift=5]
+                    \filldraw[lightgray] (0,2) rectangle (1,3);
+                    \demogrid{3}
+                    \begin{scope}[xshift=12,yshift=5]
                         \node[anchor=east,yshift=3] at (-1,1) { 4. {\push} $a$ };
                         \node at (0,2) {a};
                         \node at (0,1) {b};
@@ -196,9 +204,9 @@
                     \end{scope}
                     \\
 
-                    \filldraw[scale=0.4,lightgray] (0,1) rectangle (2,2);
-                    \draw[scale=0.4] (1) (0,0) grid (4,3);
-                    \begin{scope}[scale=0.4,xshift=12,yshift=5]
+                    \filldraw[lightgray] (0,1) rectangle (2,2);
+                    \demogrid{3}
+                    \begin{scope}[xshift=12,yshift=5]
                         \node[anchor=east,yshift=3] at (-1,1) { 5. \pop };
                         \node at (0,2) {b};
                         \node at (1,2) {c};
@@ -206,9 +214,9 @@
                     \end{scope}
                     &
 
-                    \filldraw[scale=0.4,lightgray] (1,1) rectangle (2,2);
-                    \draw[scale=0.4] (1) (0,0) grid (4,3);
-                    \begin{scope}[scale=0.4,xshift=12,yshift=5]
+                    \filldraw[lightgray] (1,1) rectangle (2,2);
+                    \demogrid{3}
+                    \begin{scope}[xshift=12,yshift=5]
                         \node[anchor=east,yshift=3] at (-1,1) { 6. \nop };
                         \node at (0,2) {b};
                         \node at (0,1) {c};
@@ -271,9 +279,9 @@
                     \end{tikzpicture}
                     \column{0cm}
                     \begin{align*}
-                        \delta_{\pushQuelle}(q_1,\ve{r_1}{r_2}{r_3},q_3) &= \ve{r_1}{r_2}{\epsilon} \\
+                        \delta_{\pushQuelle}(l,\ve{q_1}{q_2}{q_3},r) &= \ve{q_1}{q_2}{\epsilon} \\
     %\delta_{\pushQuelle}(q_1,q_2,q_3) &= (q_{21}, q_{22}, \epsilon) \\
-                        \delta_{\pushZiel}(\ve{r_1}{r_2}{r_3},\ve{s_1}{s_2}{s_3},q_3) &= \ve{r_3}{s_1}{s_2} \text{ falls } r_3 \in \Sigma
+                        \delta_{\pushZiel}(\ve{l_1}{l_2}{l_3},\ve{q_1}{q_2}{q_3},r) &= \ve{l_3}{q_1}{q_2} \text{ falls } l_3 \in \Sigma
                     \end{align*}
                 \end{columns}
             }
@@ -291,11 +299,8 @@
                     \end{tikzpicture}
                     \column{0cm}
                     \begin{align*}
-                        \delta_{\popQuelle}(\ve{r_1}{\epsilon}{\epsilon},\ve{s_1}{s_2}{s_3},q_3) &= \ve{s_2}{s_3}{\epsilon} \text { falls } s_1 \in \Sigma \\
-                        \delta_{\popZiel}(q_1,\ve{r_1}{\epsilon}{\epsilon},\ve{s_1}{s_2}{s_3}) &= \begin{cases}
-                            \ve{r_1}{s_1}{\epsilon} &\text { falls } s_1,r_1 \in \Sigma \\
-                            \ve{s_1}{\epsilon}{\epsilon} &\text { falls } r_1 \in \Sigma, r_1 = \epsilon
-                        \end{cases}
+                        \delta_{\popQuelle}(\ve{l_1}{\epsilon}{\epsilon},\ve{q_1}{q_2}{q_3},r) &= \ve{q_2}{q_3}{\epsilon} \\
+                        \delta_{\popZiel}(l,\ve{q_1}{\epsilon}{\epsilon},\ve{r_1}{r_2}{r_3}) &= \ve{q_1}{r_1}{\epsilon}
                     \end{align*}
                 \end{columns}
             }
@@ -308,7 +313,7 @@
             $\Rightarrow$ komponiere sie in eine Überführungsfunktion:
             \begin{align*}
                 \circ : \Delta_Q \times \Delta_Q &\rightarrow \Delta_Q \\
-                (\delta_1 \circ \delta_2)(q_1,q_2,q_3) &:= \delta_1(q_1,\delta_2(q_1,q_2,q_3),q_3)
+                (\delta_1 \circ \delta_2)(l,q,r) &:= \delta_1(l,\delta_2(l,q,r),r)
             \end{align*}
             Dabei ist $\Delta_Q := Q^{Q\times Q \times Q}$ die Menge der Überführungsfunktionen zum Zustand $Q$
         \item Leider gibt es ein paar Einschränkungen an die Reihenfolge:
@@ -333,9 +338,9 @@
 
 
             \begin{tikzpicture}[every node/.style={anchor=base}]
-                \matrix [row sep=1cm,column sep=1cm] {
-                    \draw[scale=0.4] (0,0) grid (4,2);
-                    \begin{scope}[scale=0.4,xshift=12,yshift=5]
+                \matrix [row sep=1cm,column sep=1cm,every cell/.style={scale=0.4}] {
+                    \demogrid{2}
+                    \begin{scope}[xshift=12,yshift=5]
                         \node[anchor=east,yshift=4] at (-1,0.5) { 1. \nop };
                         \node at (0,1) {a};
                         \node at (1,1) {b};
@@ -344,28 +349,28 @@
                     &
 
 
-                    \filldraw[scale=0.4,lightgray] (0,2) rectangle (1,1);
-                    \draw[scale=0.4] (0,0) grid (4,2);
-                    \begin{scope}[scale=0.4,xshift=12,yshift=5]
+                    \filldraw[lightgray] (0,2) rectangle (1,1);
+                    \demogrid{2}
+                    \begin{scope}[xshift=12,yshift=5]
                         \node[anchor=east,yshift=4] at (-1,0.5) { 2. \pop };
                         \node at (1,1) {b};
                         \node at (2,1) {c};
                     \end{scope}
                     \\
 
-                    \filldraw[scale=0.4,lightgray] (1,2) rectangle (2,1);
-                    \draw[scale=0.4] (0,0) grid (4,2);
-                    \begin{scope}[scale=0.4,xshift=12,yshift=5]
+                    \filldraw[lightgray] (1,2) rectangle (2,1);
+                    \demogrid{2}
+                    \begin{scope}[xshift=12,yshift=5]
                         \node[anchor=east,yshift=4] at (-1,0.5) { 3. \nop };
                         \node at (0,1) {b};
                         \node at (2,1) {c};
                     \end{scope}
                     &
 
-                    \filldraw[scale=0.4,lightgray] (0,2) rectangle (1,1);
-                    \filldraw[scale=0.4,lightgray] (2,2) rectangle (3,1);
-                    \draw[scale=0.4] (0,0) grid (4,2);
-                    \begin{scope}[scale=0.4,xshift=12,yshift=5]
+                    \filldraw[lightgray] (0,2) rectangle (1,1);
+                    \filldraw[lightgray] (2,2) rectangle (3,1);
+                    \demogrid{2}
+                    \begin{scope}[xshift=12,yshift=5]
                         \node[anchor=east,yshift=4] at (-1,0.5) { 4. \pop };
                         \node at (1,1) {c};
                     \end{scope}
@@ -384,7 +389,7 @@
         \item Wir fügen noch ein drittes an, um Symbole vom Queue-Kopf ans Ende transportieren zu können $\Rightarrow$ \enqueue!
             \begin{center}
                 \begin{tikzpicture}[scale=0.4,every node/.style={anchor=base}]
-
+                    \clip (-0.1,-0.1) rectangle (3.5,3.1);
                     \draw (1) (0,0) grid (4,3);
                     \draw[->,>=stealth,thick,rounded corners] (0.1,0.5) -- (2.5,0.5) -- (2.5,2.5);
                     \begin{scope}[xshift=12,yshift=4]
@@ -403,34 +408,49 @@
     \begin{itemize}
         \item Die Bewegung nach links der ersten zwei Bänder $\delta_\dequeue \in \Delta_{(\Sigma \cup \{\epsilon\})^2}$ sei analog zum 3-Band-Stack definiert
         \item Die Bewegung nach rechts des letzten Bandes $\delta_\enqueue \in \Delta_{(\Sigma \cup \{\epsilon\})}$ ist auch nicht schwer zu definieren:
-            \[ \delta_\enqueue(q_0,q_1,q_2) := q_0 \]
+            \[ \delta_\enqueue(l,q,r) := l \]
         \item Mit einem weiteren Kombinator können wir diese Teilüberführungsfunktionen leicht "`übereinander"' legen:
             \begin{align*}
                 \zip : \Delta_{Q_1} \times \Delta_{Q_2} &\rightarrow \Delta_{Q_1 \times Q_2} \\
-                \zip(\delta_1, \delta_2)(\vet{q_0}{r_0},\vet{q_1}{r_1},\vet{q_2}{r_2}) &:= \vet{\delta_1(q_0,q_1,q_2)}{\delta_2(r_0,r_1,r_2)}
+                \zip(\delta_1, \delta_2)(\vet{l_1}{l_2},\vet{q_1}{q_2},\vet{r_1}{r_2}) &:= \vet{\delta_1(l_1,q_1,r_1)}{\delta_2(l_2,q_2,r_2)}
             \end{align*}
             \vspace{0.1cm}
-            \[ \Rightarrow \zip(\delta_\enqueue,\delta_\dequeue) \in \Delta_{(\Sigma \cup \{\epsilon\})^3} \]
+            \[ \Rightarrow \zip(\delta_\dequeue,\delta_\enqueue) \in \Delta_{(\Sigma \cup \{\epsilon\})^3} \]
     \end{itemize}
 \end{frame}
 
 \begin{frame}{Und jetzt für Queues - formalisiert}
     \begin{itemize}
         \item Es fehlt nur noch die Interaktion der zwei Teile:
-            \[ \delta_\text{shiftUp} \in \Delta_{(\Sigma \cup \{\epsilon\})^3} \]
+            \[ \delta_\shiftUp \in \Delta_{(\Sigma \cup \{\epsilon\})^3} \]
             \begin{align*}
-                \delta_\text{shiftUp}(p_0,\ve{q_1}{\epsilon}{s_1},p_2) &:= \ve{q_1}{s_1}{\epsilon} \text{ für } q_1 \in \Sigma\\
-                \delta_\text{shiftUp}(p_0,\ve{\epsilon}{\epsilon}{s_1},p_2) &:= \ve{s_1}{\epsilon}{\epsilon}
+                \delta_\shiftUp(l,\ve{\epsilon}{\epsilon}{q_3},r) &:= \ve{q_3}{\epsilon}{\epsilon} \\
+                \delta_\shiftUp(l,\ve{q_1}{\epsilon}{q_3},\ve{\epsilon}{\epsilon}{\epsilon}) &:= \ve{q_1}{q_3}{\epsilon} \text{ für } q_1 \in \Sigma
             \end{align*}
         \item Wir kombinieren scharf:
-            \[ \delta := \delta_\text{shiftUp} \circ \zip(\delta_\enqueue,\delta_\dequeue) \]
+            \begin{columns}
+                \column{4cm}
+                \vspace{-0.5cm}
+                \[ \delta := \delta_\shiftUp \circ \zip(\delta_\dequeue,\delta_\enqueue) \]
+                \column{1cm}
+                \begin{tikzpicture}[scale=0.4,every node/.style={anchor=base}]
+                    \begin{scope}
+                        \clip (-0.1,-0.1) rectangle (4.5,3.1);
+                        \draw[color=gray] (1) (0,0) grid (5,3);
+                    \end{scope}
+                    \draw[->,>=stealth,thick] (3.5,2.5) -- (2.5,1.5) -- (2.5,2.5) -- (1.5,1.5) -- (1.5,2.5) -- node[above=0.2] { \dequeue } (0.5,1.5) -- (0.5,2.5) -- (-0.5,1.5);
+                    \draw[->,>=stealth,thick] (-0.5,0.5) -- node[below=0.1] { \enqueue } (3.3,0.5);
+                    \draw[->,>=stealth,thick] (3.5,0.5) -- node[below=0.2,sloped] { \shiftUp } (3.5,2.3);
+                \end{tikzpicture}
+            \end{columns}
     \end{itemize}
 \end{frame}
 
 \setbeamertemplate{headline}{}
 \begin{frame}{Danke für die Aufmerksamkeit!}
     \begin{center}
-        Fragen?
+        Präsentation, Ausarbeitung und Code: \\
+        \texttt{github.com/kha/ca-datastructs}
     \end{center}
 \end{frame}
 \end{document}
