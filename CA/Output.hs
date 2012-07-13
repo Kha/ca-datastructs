@@ -8,6 +8,7 @@ import CA
 import Data.List
 import Control.Concurrent
 import System.Console.ANSI
+import System.IO
 
 padMany :: [String] -> [String]
 padMany [] = []
@@ -59,6 +60,7 @@ printTape padding = map (take 70 . padString padding) . bracketizeLines . tapeSh
 
 runWithOptions :: (Eq a) => Automaton a -> Bool -> (Int -> [a] -> [String]) -> [a] -> Int -> IO ()
 runWithOptions a pause printTape tape padding = do
+    hSetEcho stdin False
     n <- loop pause a (printTape padding tape) tape padding 1
     putStrLn $ "Halted after " ++ show n ++ " steps"
     where

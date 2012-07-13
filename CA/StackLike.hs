@@ -88,17 +88,19 @@ instance (MultiShow a, MultiShow b) => Tape (Either a b) where
 interactiveStackLike :: (Eq q, Tape q) => StackLike q Char -> [q] -> IO ()
 interactiveStackLike stack tape = do
     hSetEcho stdin False
-    loop False tape (printTape 0 tape) where
-    loop pause tape lastOut = do
+    loop False tape (printTape 0 tape) True where
+    loop pause tape lastOut first = do
         input <- (\ready -> ready || pause) `fmap` hReady stdin
         cmd <- if not input then return Nop else
             (\a -> if a == 'x' then Pop else Push a) `fmap` getChar
-        let out = printTape 0 tape
-        sequence_ . zipWith (>>) (cmdOut cmd tape) $ zipWith diffOut lastOut out
         threadDelay 600000
         case delta' stack cmd tape of
-            tape' | tape' == tape -> loop True tape' out
-            tape' -> loop False tape' out
+            tape' | not first && tape' == tape -> loop True tape' lastOut False
+            tape' -> do
+                let out = printTape 0 tape'
+                sequence_ . zipWith (>>) (cmdOut cmd tape) $ zipWith diffOut lastOut out
+                loop False tape' out False
+
     cmdOut cmd tape = map putStr $ pad 12 ' ' (showCmd cmd tape) : repeat (replicate 12 ' ')
     showCmd Pop tape = show (Pop :: StackCmd Char) ++ " => " ++ show (fromMaybe ' ' . gamma stack $ head tape)
     showCmd cmd _ = show cmd
