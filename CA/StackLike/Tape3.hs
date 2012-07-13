@@ -40,20 +40,20 @@ instance MultiShow ([Char], Maybe Char) where
 
 queue3 = (fromAutomaton Automaton {
         q_0 = ([],Nothing),
-        delta = delta
+        delta = deltaShiftUp `composeDelta` cartesianDelta deltaDequeue deltaEnqueue
     } liftCmd) { gamma = listToMaybe . fst }
     where
         liftCmd (Push a) = (['x','x'],Just a)
         liftCmd Pop = ([],Nothing)
         liftCmd Nop = (['x','x'],Nothing)
 
-        delta0 _ (cs,d) (a:_,_) | length cs <= 1 = (cs++[a],d) -- pop dest
-        delta0 _ q1 _ = q1
+        deltaDequeue = delta2 `composeDelta` delta1 where
+            delta1 _ bs (c:_) | length bs <= 1 = bs++[c] -- pop dest
+            delta1 _ q1 _ = q1
+            delta2 as bs _ | length as <= 1 = drop 1 bs -- pop source
+            delta2 _ q1 _ = q1
 
-        delta1 (cs1,_) (cs2,d) _ | length cs1 <= 1 = (drop 1 cs2,d)
-        delta1 _ q1 _ = q1
+        deltaEnqueue a b c = a
 
-        delta2 (_,Just c) (cs,_) _ | length cs <= 1 = (cs++[c],Nothing) -- push source, dest
-        delta2 (_,c) (cs,_) _ = (cs,c)
-
-        delta = delta2 `composeDelta` delta1 `composeDelta` delta0
+        deltaShiftUp _ (bs,Just b) _ | length bs <= 1 = (bs++[b],Nothing)
+        deltaShiftUp _ q1 _ = q1
