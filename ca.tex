@@ -1,12 +1,14 @@
 % vim: spelllang=de_20
 \documentclass{article}
 
-\title{Zellularautomaten: Datenstrukturen}
+\title{Datenstrukturen in Zellularautomaten}
 \author{Sebastian Ullrich}
 \date{Sommersemester 2012}
 
 \usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
 \usepackage[ngerman]{babel}
+\usepackage{xspace}
 
 \usepackage{amsmath,amsfonts}
 \usepackage[hyperref,standard,thref]{ntheorem}
@@ -15,23 +17,35 @@
 
 \usetikzlibrary{matrix,arrows,positioning}
 
+\DeclareMathOperator{\zip}{zip}
+
 \begin{document}
 
 \newcommand{\ca}{\ensuremath\mathcal{A}}
 \newcommand{\abs}[1]{\lvert#1\rvert}
 \newcommand{\ceil}[1]{\lceil#1\rceil}
-\newcommand{\zrange}[1]{\mathbb{G}_{#1}}
+\newcommand{\zrange}[1]{\{1,\dots,#1\}}
 \newcommand{\bild}[1]{\text{Bild}(#1)}
 \newcommand{\N}{\mathbb{N}}
 \newcommand{\ve}[3]{\begin{pmatrix}#1\\#2\\#3\end{pmatrix}}
+\newcommand{\vet}[2]{\begin{pmatrix}#1\\#2\end{pmatrix}}
 
-\newcommand{\pop}{\ensuremath{\mathit{pop}}}
-\newcommand{\popZiel}{\ensuremath{\mathit{popZiel}}}
-\newcommand{\popQuelle}{\ensuremath{\mathit{popQuelle}}}
-\newcommand{\nop}{\ensuremath{\mathit{nop}}}
-\newcommand{\push}{\ensuremath{\mathit{push}}}
-\newcommand{\pushZiel}{\ensuremath{\mathit{pushZiel}}}
-\newcommand{\pushQuelle}{\ensuremath{\mathit{pushQuelle}}}
+\newcommand{\pop}{\ensuremath{\mathit{pop}}\xspace}
+\newcommand{\popZiel}{\ensuremath{\mathit{popZiel}}\xspace}
+\newcommand{\popQuelle}{\ensuremath{\mathit{popQuelle}}\xspace}
+\newcommand{\nop}{\ensuremath{\mathit{nop}}\xspace}
+\newcommand{\push}{\ensuremath{\mathit{push}}\xspace}
+\newcommand{\pushZiel}{\ensuremath{\mathit{pushZiel}}\xspace}
+\newcommand{\pushQuelle}{\ensuremath{\mathit{pushQuelle}}\xspace}
+\newcommand{\enqueue}{\ensuremath{\mathit{enqueue}}\xspace}
+\newcommand{\dequeue}{\ensuremath{\mathit{dequeue}}\xspace}
+\newcommand{\shiftUp}{\ensuremath{\mathit{shiftUp}}\xspace}
+\newcommand{\demogrid}[1]{
+    \begin{scope}
+        \clip (-0.1,-0.1) rectangle (3.5,#1+0.1);
+        \draw (1) (0,0) grid (4,#1);
+    \end{scope}
+}
 
 \maketitle
 \newpage
@@ -40,7 +54,7 @@
     Um die Mächtigkeit des Berechnungsmodells der Zellularautomaten zu zeigen, bieten sich Reduktionen anderer Modelle auf dieses an. Dafür ist es oft nötig, eine Datenstruktur wie den Stack eines Kellerspeicherautomaten oder die Bänder einer Turing-Maschine auf einen Zellularautomaten abzubilden. Martin Kutrib beschreibt in \cite{kutrib08} die Implementierung eines Stacks und einer Queue ohne Zeitverlust. Diese Arbeit baut darauf auf und erweitert sie um eine allgemeine, formale Definition der zwei Datenstrukturen, wodurch beweisbare Aussagen über ihre Eigenschaften geschlossen werden können. Insbesondere wird bewiesen, dass Stacks erst ab einer gewissen Größe der Zustandsmenge ohne Zeitverlust implementiert werden können und damit Kutribs Implementierung in dieser Hinsicht als minimal angesehen werden kann.
 \end{abstract}
 
-\section{Definition}
+\section{Formale Definition}
 
 \begin{figure}[h]
     \centering
@@ -58,24 +72,29 @@
     \end{tikzpicture}
     \caption{Schematischer Aufbau und Verhalten einer Datenstruktur}
 \end{figure}
-Wir betrachten Datenstrukturen mit Von-Neumann-Nachbarschaft von Radius 1 auf dem Gitter $R = \N$, das wir als nach rechts offenes Band darstellen. Für Zellen ab Position 2 existiert also eine Übergangsfunktion $\delta : Q^3 \rightarrow Q$, die den neuen Zustand einer Zelle in Abhängigkeit des Zustands ihres linken Nachbarn, der Zelle selbst und ihres rechten Nachbarn bestimmt.
+Wir betrachten Datenstrukturen mit Von-Neumann-Nachbarschaft von Radius 1 auf dem Gitter $R = \N$, das wir als nach rechts offenes Band darstellen. Für Zellen ab Position 2 existiert also eine Überführungsfunktion $\delta : Q^3 \rightarrow Q$, die den neuen Zustand einer Zelle in Abhängigkeit des Zustands ihres linken Nachbarn, der Zelle selbst und ihres rechten Nachbarn bestimmt.
 
-Die erste Zelle dagegen besitzt keinen linken Nachbarn, kann allerdings Befehle von außerhalb des Automaten (bildlich "`von links"') entgegennehmen, welche wir bei den betrachteten Datenstrukturen Stack und Queue beide Male \push und \pop nennen wollen. Zusammen mit einer Operation \nop, der Nulloperation, können wir damit das Verhalten der ersten Zelle und gleichzeitig das von außen sichtbare Verhalten der ganzen Datenstruktur durch drei Übergangsfunktionen
+Die erste Zelle dagegen besitzt keinen linken Nachbarn, kann allerdings Befehle von außerhalb des Automaten (bildlich "`von links"') entgegennehmen, welche wir bei den betrachteten Datenstrukturen Stack und Queue beide Male \push und \pop nennen wollen. Zusammen mit einer Operation \nop, der Nulloperation, können wir damit das Verhalten der ersten Zelle und gleichzeitig das von außen sichtbare Verhalten der ganzen Datenstruktur durch drei Überführungsfunktionen
 \begin{align*}
     \delta_{\push} &: \Sigma \times Q^2 \rightarrow Q \\
     \delta_{\pop}, \delta_{\nop} &: Q^2 \rightarrow Q
 \end{align*}
 und eine \emph{Inhaltsfunktion}
-\[ \gamma : Q \rightarrow \Sigma \cup {\epsilon} \]
-die das oberste Symbol oder $\epsilon$ bei einer leeren Struktur zurückgibt, beschreiben. Dabei ist das Alphabet $\Sigma$ von der letztendlichen Anwendung der Datenstruktur abhängig.
+\[ \gamma : Q \rightarrow \Sigma \cup \{\epsilon\} \]
+die das oberste Symbol oder $\epsilon$ bei einer leeren Struktur zurückgibt, beschreiben. Dabei ist das Ein-/Ausgabealphabet $\Sigma$ von der letztendlichen Anwendung der Datenstruktur abhängig.
 
-Auf Basis der vier $\delta$ seien entsprechend noch definiert
+Auf Basis dieser lokalen Überführungsfunktionen seien entsprechende globale Überführungsfunktionen definiert:
 \begin{align*}
     \Delta_{\push} &: \Sigma \times Q^\N \rightarrow Q^\N \\
     \Delta_{\pop} &: Q^\N \rightarrow (\Sigma \cup \{\epsilon\}) \times Q^\N \\
     \Delta_{\nop} &: Q^\N \rightarrow Q^\N
 \end{align*}
-Da wir aber auch Datenstrukturen betrachten wollen, die mit Zeitverlust agieren, definieren wir noch
+Beispielhaft lässt sich $\Delta_\nop$ definieren durch
+\[ \Delta_\nop(c) := \left(\gamma(c(1)), \left< i \mapsto \begin{cases}
+        \delta_\nop(c(1), c(2)) &\text{falls } i = 1 \\
+        \delta(c(i-1), c(i), c(i+1)) &\text{sonst }
+\end{cases} \right> \right) \]
+Da wir aber auch Datenstrukturen betrachten wollen, die mit Zeitverlust agieren, definieren wir darüber hinaus
 \begin{align*}
     \Delta^*_{\push} &: \Sigma \times Q^\N \rightarrow Q^\N,& (a,c) &\mapsto \Delta_{\push}(a,\Delta^i_{\nop}(c)) \\
     \Delta^*_{\pop} &: Q^\N \rightarrow (\Sigma \cup \{\epsilon\}) \times Q^\N,& c &\mapsto \Delta_{\pop}(\Delta^i_{\nop}(c))
@@ -92,12 +111,13 @@ Natürlich wollen wir noch Bedingungen an das Verhalten einer Datenstruktur stel
     \end{cases} \]
 \end{definition}
 
-Nun lassen sich die erwarteten Eigenschaften einer Implementierung endlich formal definieren:
+Nun lassen sich die erwarteten Eigenschaften einer Implementierung formal definieren:
 \begin{definition}
-    Wir nennen einen Zellularautomaten $(Q, \delta, \delta_{\push}, \delta_{\pop}, \delta_{\nop}, q_0)$ einen Stack, falls er folgende Axiome erfüllt:
+    Ein \emph{Stack}-Zellularautomat ist ein 6-Tupel $(Q, \delta, \delta_{\push}, \delta_{\pop}, \delta_{\nop}, q_0)$, das folgende Axiome erfüllt:
 
-    Für jede \emph{valide} Konfiguration $c$, also eine aus $c_0 \equiv q_0$ durch beliebig wiederholte Anwendung der drei $\Delta$ ableitbare Konfiguration, muss gelten:
+    Für jede \emph{valide} Konfiguration $c$, also eine aus $c_0 \equiv q_0$ durch beliebig wiederholte Anwendung von $\Delta_\nop$, $\Delta^*_\push$ und $\Delta^*_\pop$ ableitbare Konfiguration, muss gelten:
     \begin{enumerate}
+        \item $\delta(q_0, q_0, q_0) = q_0$: $\,q_0$ ist der Ruhezustand
         \item $\forall a \in \Sigma: \Gamma(\Delta^*_{\push}(a,c)) = a \cdot \Gamma(c)$
         \item $\forall a \in \Sigma, w \in \Sigma^*: \left[ \Gamma(c) = a \cdot w \Rightarrow \Delta^*_{\pop}(c) = (a,c'), \Gamma(c') = w \right]$
         \item $\Gamma(c) = \epsilon \Rightarrow \Delta^*_{\pop}(c) = (\epsilon,c'), \Gamma(c') = \epsilon$
@@ -106,7 +126,7 @@ Nun lassen sich die erwarteten Eigenschaften einer Implementierung endlich forma
     Insbesondere arbeitet der Stack \emph{ohne Zeitverlust}, falls die Axiome schon durch $\Delta_{\push}$ und $\Delta_{\pop}$ erfüllt werden.
 \end{definition}
 
-Analog kann eine Queue-Struktur formal definiert werden.
+Analog kann eine Queue-Struktur formal definiert werden. Für alle folgenden Implementierungen der zwei Datenstrukturen wurden die Axiome mithilfe von \emph{QuickCheck} (\cite{hughes00}) auf zufälligen Konfigurationen überprüft.
 
 \begin{beispiel}
     \begin{figure}[h]
@@ -122,7 +142,7 @@ Analog kann eine Queue-Struktur formal definiert werden.
         \end{tikzpicture}
         \caption{Simulation einer Turing-Maschine durch zwei Stacks}
     \end{figure}
-    Gegeben eine Stack-Implementierung $(Q_S, \delta_S, \delta_{\push}, \delta_{\pop}, \delta_{\nop}, q^S_0)$ ohne Zeitverlust, können wir mit zwei Stacks eine Turing-Maschine $(Q_T, \Sigma, \delta_T, q^T_0, q_f)$ ohne Zeitverlust simulieren (das Bandalphabet sei der Einfachheit halber das Eingabealphabet). Dazu speichern wir in Zelle 0  den aktuellen Zustand und das Symbol unter dem Lesekopf und links und rechts davon in je einem der Stacks das linke bzw. rechte Restband. Es ergibt sich $Q := (Q_T \times \Sigma) \cup Q^2_S$ und die Übergangsfunktion für Zelle 0
+    Gegeben eine Stack-Implementierung $(Q_S, \delta_S, \delta_{\push}, \delta_{\pop}, \delta_{\nop}, q^S_0)$ ohne Zeitverlust, können wir mit zwei Stacks eine Turing-Maschine $(Q_T, \Sigma, \delta_T, q^T_0, \sqcup, q_f)$ ohne Zeitverlust simulieren (das Bandalphabet sei der Einfachheit halber das Eingabealphabet). Dazu speichern wir in Zelle 0 des Gitters $\mathbb{Z}$ den aktuellen Zustand und das Symbol unter dem Lesekopf und links und rechts davon in je einem der Stacks das linke bzw. rechte Restband. Es ergibt sich $Q := (Q_T \times \Sigma) \cup Q_S$ und die Überführungsfunktion für Zelle 0
     \[ \delta_0(q_{-1}, (q, a), q_1) :=
         \begin{cases}
             (q', a') &\text{für } \delta_T(q, a) = (q', a', N) \\
@@ -134,30 +154,29 @@ Analog kann eine Queue-Struktur formal definiert werden.
             \gamma(q) &\text{für } \gamma(q) \in \Sigma \\
             \sqcup &\text{für } \gamma(q) = \epsilon
     \end{cases} \]
-    und Zelle 1
+    sowie für Zelle 1 (und analog für Zelle -1)
     \[ \delta_1((q, a), q_1, q_2) :=
         \begin{cases}
             \delta_{\nop}(q_1, q_2) &\text{für } \delta_T(q, a) = (q', a', N) \\
             \delta_{\push}(a', q_1, q_2) &\text{für } \delta_T(q, a) = (q', a', L) \\
             \delta_{\pop}(q_1, q_2) &\text{für } \delta_T(q, a) = (q', a', R) \\
     \end{cases} \]
-    und analog für Zelle -1.
 \end{beispiel}
 
-\section{Stack: Implementierungen}
+\section{Zwei Stack-Implementierungen}
 
 \subsection{Ein 3-Band-Stack ohne Zeitverlust}
 
-Kutribs Stack ohne Zeitverlust in \cite{kutrib08} besitzt die Zustandsmenge $(\Sigma \cup \{\epsilon\})^3$ mit $q_0 = (\epsilon,\epsilon,\epsilon)$, was er einen \emph{3-Band-Automaten} nennt, die drei Werte des Tupels \emph{Register}.
+Kutribs Stack ohne Zeitverlust in \cite{kutrib08} speichert bis zu drei Symbole in \emph{Registern} einer Zelle und bezeichnet ihn deshalb als \emph{3-Band-Automaten}. Es bietet sich damit die Zustandsmenge $(\Sigma \cup \{\epsilon\})^3$ mit $q_0 = (\epsilon,\epsilon,\epsilon)$ an.
 
 Der Inhalt eines solchen Automaten ist die Konkatenation seiner Zellinhalte:
 \begin{align*}
     \gamma(\ve{r_1}{r_2}{r_3}) &:= r_1 \\
-    \Gamma(c) &= \sum^\infty_{i=1} c(i)
+    \Gamma(c) &= \prod^\infty_{i=1} c(i)
 \end{align*}
 Diese Summe ist endlich, da sich in jeder validen, also in endlicher Zeit aus dem leeren Band entstandenen Konfiguration nur endlich viele Zellen von $q_0$ unterscheiden können.
 
-Jede Zelle des Automaten versucht, genau zwei ihrer Register gefüllt zu halten (wobei in jedem Zustand die vollen Register vor den leeren stehen werden). Für die Übergangsfunktion folgen folgende Regeln:
+Jede Zelle des Automaten versucht, genau zwei ihrer Register gefüllt zu halten (wobei in jedem Zustand die vollen Register vor den leeren stehen werden). Für die Überführungsfunktion ergeben sich daraus folgende Regeln:
 \begin{enumerate}
     \item Eine Zelle mit drei vollen Registern gibt den Inhalt ihres dritten Registers an ihren rechten Nachbarn ab, der ihn seinen Registern voranstellt.
         \begin{center}
@@ -189,9 +208,9 @@ Jede Zelle des Automaten versucht, genau zwei ihrer Register gefüllt zu halten 
 \begin{figure}[h]
     \centering
     \begin{tikzpicture}[every filldraw/.style=lightgray,every node/.style={anchor=base}]
-        \matrix (mym) [row sep=1cm,column sep=1cm] {
-            \draw[scale=0.4] (1) (0,0) grid (4,3);
-            \begin{scope}[scale=0.4,xshift=12,yshift=5]
+        \matrix (mym) [row sep=1cm,column sep=1cm,every cell/.style={scale=0.4}] {
+            \demogrid{3}
+            \begin{scope}[xshift=12,yshift=5]
                 \node[anchor=east,yshift=3] at (-1,1) { 1. \nop };
                 \node at (0,2) {a};
                 \node at (0,1) {b};
@@ -201,9 +220,9 @@ Jede Zelle des Automaten versucht, genau zwei ihrer Register gefüllt zu halten 
             &
 
 
-            \filldraw[scale=0.4,lightgray] (0,2) rectangle (1,1);
-            \draw[scale=0.4] (1) (0,0) grid (4,3);
-            \begin{scope}[scale=0.4,xshift=12,yshift=5]
+            \filldraw[lightgray] (0,2) rectangle (1,1);
+            \demogrid{3}
+            \begin{scope}[xshift=12,yshift=5]
                 \node[anchor=east,yshift=3] at (-1,1) { 2. \pop };
                 \node at (0,2) {b};
                 \node at (1,2) {c};
@@ -211,9 +230,9 @@ Jede Zelle des Automaten versucht, genau zwei ihrer Register gefüllt zu halten 
             \end{scope}
             \\
 
-            \filldraw[scale=0.4,lightgray] (1,2) rectangle (2,1);
-            \draw[scale=0.4] (1) (0,0) grid (4,3);
-            \begin{scope}[scale=0.4,xshift=12,yshift=5]
+            \filldraw[lightgray] (1,2) rectangle (2,1);
+            \demogrid{3}
+            \begin{scope}[xshift=12,yshift=5]
                 \node[anchor=east,yshift=3] at (-1,1) { 3. \nop };
                 \node at (0,2) {b};
                 \node at (0,1) {c};
@@ -221,10 +240,10 @@ Jede Zelle des Automaten versucht, genau zwei ihrer Register gefüllt zu halten 
             \end{scope}
             &
 
-            \filldraw[scale=0.4,lightgray] (0,2) rectangle (1,3);
-            \draw[scale=0.4] (1) (0,0) grid (4,3);
-            \begin{scope}[scale=0.4,xshift=12,yshift=5]
-                \node[anchor=east,yshift=3] at (-1,1) { 4. \push $a$ };
+            \filldraw[lightgray] (0,2) rectangle (1,3);
+            \demogrid{3}
+            \begin{scope}[xshift=12,yshift=5]
+                \node[anchor=east,yshift=3] at (-1,1) { 4. {\push} $a$ };
                 \node at (0,2) {a};
                 \node at (0,1) {b};
                 \node at (0,0) {c};
@@ -232,9 +251,9 @@ Jede Zelle des Automaten versucht, genau zwei ihrer Register gefüllt zu halten 
             \end{scope}
             \\
 
-            \filldraw[scale=0.4,lightgray] (0,1) rectangle (2,2);
-            \draw[scale=0.4] (1) (0,0) grid (4,3);
-            \begin{scope}[scale=0.4,xshift=12,yshift=5]
+            \filldraw[lightgray] (0,1) rectangle (2,2);
+            \demogrid{3}
+            \begin{scope}[xshift=12,yshift=5]
                 \node[anchor=east,yshift=3] at (-1,1) { 5. \pop };
                 \node at (0,2) {b};
                 \node at (1,2) {c};
@@ -242,9 +261,9 @@ Jede Zelle des Automaten versucht, genau zwei ihrer Register gefüllt zu halten 
             \end{scope}
             &
 
-            \filldraw[scale=0.4,lightgray] (1,1) rectangle (2,2);
-            \draw[scale=0.4] (1) (0,0) grid (4,3);
-            \begin{scope}[scale=0.4,xshift=12,yshift=5]
+            \filldraw[lightgray] (1,1) rectangle (2,2);
+            \demogrid{3}
+            \begin{scope}[xshift=12,yshift=5]
                 \node[anchor=east,yshift=3] at (-1,1) { 6. \nop };
                 \node at (0,2) {b};
                 \node at (0,1) {c};
@@ -255,29 +274,25 @@ Jede Zelle des Automaten versucht, genau zwei ihrer Register gefüllt zu halten 
     \end{tikzpicture}
     \caption{Beispielablauf des 3-Band-Stacks. Graue Zellen beschreiben die Einfügungen bzw. Löschungen durch eine Operation}
 \end{figure}
-Betrachten wir beide Regeln jeweils aus Sicht der \emph{Quell-} und \emph{Zielzelle}, ergeben sich die vier Übergangsfunktionen
+Betrachten wir beide Regeln jeweils aus Sicht der \emph{Quell-} und \emph{Zielzelle}, ergeben sich die vier Überführungsfunktionen
 \begin{align*}
-    \delta_{\pushQuelle}(q_1,\ve{r_1}{r_2}{r_3},q_3) &= \ve{r_1}{r_2}{\epsilon} \\
-    %\delta_{\pushQuelle}(q_1,q_2,q_3) &= (q_{21}, q_{22}, \epsilon) \\
-    \delta_{\pushZiel}(\ve{r_1}{r_2}{r_3},\ve{s_1}{s_2}{s_3},q_3) &= \ve{r_3}{s_1}{s_2} \text{ falls } r_3 \in \Sigma \\
-    \delta_{\popQuelle}(\ve{r_1}{\epsilon}{\epsilon},\ve{s_1}{s_2}{s_3},q_3) &= \ve{s_2}{s_3}{\epsilon} \text { falls } s_1 \in \Sigma \\
-    \delta_{\popZiel}(q_1,\ve{r_1}{\epsilon}{\epsilon},\ve{s_1}{s_2}{s_3}) &= \begin{cases}
-        \ve{r_1}{s_1}{\epsilon} &\text { falls } s_1,r_1 \in \Sigma \\
-        \ve{s_1}{\epsilon}{\epsilon} &\text { falls } r_1 \in \Sigma, r_1 = \epsilon
-    \end{cases}
+    \delta_{\pushQuelle}(l,\ve{q_1}{q_2}{q_3},r) &= \ve{q_1}{q_2}{\epsilon} \\
+    \delta_{\pushZiel}(\ve{l_1}{l_2}{l_3},\ve{q_1}{q_2}{q_3},r) &= \ve{l_3}{q_1}{q_2} \text{ falls } l_3 \in \Sigma \\
+    \delta_{\popQuelle}(\ve{l_1}{\epsilon}{\epsilon},\ve{q_1}{q_2}{q_3},r) &= \ve{q_2}{q_3}{\epsilon} \\
+    \delta_{\popZiel}(l,\ve{q_1}{\epsilon}{\epsilon},\ve{r_1}{r_2}{r_3}) &= \ve{q_1}{r_1}{\epsilon}
 \end{align*}
 In allen nichtspezifizierten Fällen sei der Zellzustand unverändert.
 
-Da in einem Zeitschritt gegebenenfalls mehrere Fälle auf die gleiche Zelle zutreffen können, müssen diese vier Funktionen noch in der richtigen Reihenfolge zusammengesetzt werden. Die Definition einer \emph{Komposition} von Übergangsfunktionen ist noch recht naheliegend:
+Da in einem Zeitschritt gegebenenfalls mehrere Fälle auf die gleiche Zelle zutreffen können, müssen diese vier Teilüberführungsfunktionen noch in der richtigen Reihenfolge zusammengesetzt werden. Die Definition einer \emph{Komposition} von Überführungsfunktionen über der gleichen Zustandsmenge $Q$ ist noch recht naheliegend: Es sei $\Delta_Q := Q^{Q \times Q \times Q}$ die Menge dieser Überführungsfunktionen (bei Von-Neumann-Nachbarschaft mit Radius 1) und darauf definiert
 \begin{align*}
-    \circ : Q^{Q \times Q \times Q} \times Q^{Q \times Q \times Q} &\rightarrow Q^{Q \times Q \times Q} \\
-    (\delta_1 \circ \delta_2)(q_1,q_2,q_3) &:= \delta_1(q_1,\delta_2(q_1,q_2,q_3),q_3)
+    \circ : \Delta_Q \times \Delta_Q &\rightarrow \Delta_Q \\
+    (\delta_1 \circ \delta_2)(l,q,r) &:= \delta_1(l,\delta_2(l,q,r),r)
 \end{align*}
 Schwieriger ist dagegen die Festlegung der Reihenfolge. Es ergeben sich folgende Einschränkungen:
 \begin{enumerate}
     \item $\pushZiel \leftarrow \pushQuelle$: Wurde gerade ein Zeichen in die Zelle gepusht und dadurch alle Register gefüllt, darf \pushQuelle das letzte Register nicht im gleichen Zeitschritt wieder leeren.
-    \item $\popQuelle \leftarrow \popZiel$: Wurde durch \popQuelle die Zahl der gefüllten Zellen von zwei auf eine verringert, darf \popZiel im gleichen Zeitschritt nicht schon ein Zeichen von rechts übernehmen, da für den rechten Nachbarn die Zelle noch nicht unterfüllt erscheint.
-    \item $\popQuelle \leftarrow \pushQuelle$: Sieht der rechte Nachbar eine voll gefüllte Zelle und wird das dritte Register übernehmen, darf \pushQuelle dessen Inhalt nicht ins zweite Register schieben.
+    \item $\popQuelle \leftarrow \popZiel$: Wurde durch \popQuelle die Zahl der gefüllten Zellen von zwei auf eines verringert, darf \popZiel im gleichen Zeitschritt nicht schon ein Zeichen von rechts übernehmen, da für den rechten Nachbarn die Zelle noch nicht unterfüllt erscheint.
+    \item $\popQuelle \leftarrow \pushQuelle$: Sieht der rechte Nachbar eine voll gefüllte Zelle und wird das dritte Register übernehmen, darf \popQuelle dessen Inhalt nicht ins zweite Register schieben.
     \item $\pushZiel \leftarrow \popZiel$: Sieht der rechte Nachbar, dass nur eine Zelle gefüllt ist, und wird sein erstes Register löschen, muss \popZiel dieses übernehmen, bevor \pushZiel die Zahl der gefüllten Register ggf. auf 2 erhöht.
 \end{enumerate}
 
@@ -291,18 +306,17 @@ Schwieriger ist dagegen die Festlegung der Reihenfolge. Es ergeben sich folgende
         \draw[->] (pushQuelle) edge (pushZiel) edge (popQuelle)
         (popZiel) edge (pushZiel) edge (popQuelle);
     \end{tikzpicture}
-    \caption{Abhängigkeitsdiagramm der vier Übergangsfunktionen}
+    \caption{Abhängigkeitsdiagramm der vier Überführungsfunktionen}
 \end{figure}
 Damit ergibt sich als eine von vier Möglichkeiten beispielhaft
 \[ \delta := \delta_{\pushZiel} \circ \delta_{\popQuelle} \circ \delta_{\popZiel} \circ \delta_{\pushQuelle} \]
 
-Es verbleiben die Übergangsfunktionen des Stackkopfes. Diese können in diesem Fall allerdings leicht aus $\delta$ abgeleitet werden, indem die jeweilige Operation als virtuelle Zelle links vom Kopf betrachtet wird:
+Es verbleiben die Überführungsfunktionen des Stackkopfes. Diese können in diesem Fall allerdings leicht aus $\delta$ abgeleitet werden, indem die jeweilige Operation als virtuelle Zelle links vom Kopf betrachtet wird, wobei $b \in \Sigma$ ein beliebiges Symbol zum Auffüllen der Tupel ist.
 \begin{align*}
     \delta_{\push}(a, q_1, q_2) &:= \delta(\ve{b}{b}{a}, q_1, q_2) \\
     \delta_{\pop}(q_1, q_2) &:= \delta(\ve{\epsilon}{\epsilon}{\epsilon}, q_1, q_2) \\
     \delta_{\nop}(q_1, q_2) &:= \delta(\ve{b}{b}{\epsilon}, q_1, q_2) \\
 \end{align*}
-wobei $b \in \Sigma$ beliebig ist.
 
 \subsection{Ein 2-Band-Stack mit Zeitverlust}
 
@@ -378,12 +392,131 @@ Da die Symbole im Ruhezustand nun allerdings linear im ersten Band angeordnet si
 \end{figure}
 
 
+\section{Eine Queue-Implementierung ohne Zeitverlust}
+
+Auch für Queues beschreibt Kutrib eine Implementierung ohne Zeitverlust, wiederum mit drei Bändern. In dieser werden wieder die ersten zwei Bänder gefüllt gehalten, um \dequeue-Operationen genau wie \pop-Operationen beim 3-Band-Stack ohne Zeitverlust anbieten zu können. Das dritte Band ist damit noch frei und kann die Eingabe der \enqueue-Operation von der Kopfzelle vorbei am Inhalt der ersten zwei Bänder ans Schlangenende weiterleiten.
+\begin{figure}[h]
+    \centering
+    \begin{tikzpicture}[every filldraw/.style=lightgray,every node/.style={anchor=base}]
+        \matrix (mym) [row sep=1cm,column sep=1cm,every cell/.style={scale=0.4}] {
+            \demogrid{3}
+            \begin{scope}[xshift=12,yshift=5]
+                \node[anchor=east,yshift=3] at (-1,1) { 1. \nop };
+                \node at (0,2) {a};
+                \node at (0,1) {b};
+                \node at (1,2) {c};
+                \node at (1,1) {d};
+                \node at (2,2) {e};
+            \end{scope}
+            &
+
+            \filldraw[lightgray] (0,2) rectangle (1,1);
+            \demogrid{3}
+            \begin{scope}[xshift=12,yshift=5]
+                \node[anchor=east,yshift=3] at (-1,1) { 2. \dequeue };
+                \node at (0,2) {b};
+                \node at (1,2) {c};
+                \node at (1,1) {d};
+                \node at (2,2) {e};
+            \end{scope}
+            &
+
+            \filldraw[lightgray] (1,2) rectangle (2,1);
+            \demogrid{3}
+            \begin{scope}[xshift=12,yshift=5]
+                \node[anchor=east,yshift=3] at (-1,1) { 3. \nop };
+                \node at (0,2) {b};
+                \node at (0,1) {c};
+                \node at (1,2) {d};
+                \node at (2,2) {e};
+            \end{scope}
+            \\
+
+            \filldraw[lightgray] (2,2) rectangle (3,3);
+            \demogrid{3}
+            \begin{scope}[xshift=12,yshift=5]
+                \node[anchor=east,yshift=3] at (-1,1) { 4. \nop };
+                \node at (0,2) {b};
+                \node at (0,1) {c};
+                \node at (1,2) {d};
+                \node at (1,1) {e};
+            \end{scope}
+            &
+
+            \filldraw[lightgray] (0,0) rectangle (1,1);
+            \demogrid{3}
+            \begin{scope}[xshift=12,yshift=5]
+                \node[anchor=east,yshift=3] at (-1,1) { 5. \enqueue f };
+                \node at (0,2) {b};
+                \node at (0,1) {c};
+                \node at (1,2) {d};
+                \node at (1,1) {e};
+                \node at (0,0) {f};
+            \end{scope}
+            &
+
+            \filldraw[lightgray] (1,0) rectangle (2,1);
+            \demogrid{3}
+            \begin{scope}[xshift=12,yshift=5]
+                \node[anchor=east,yshift=3] at (-1,1) { 6. \nop };
+                \node at (0,2) {b};
+                \node at (0,1) {c};
+                \node at (1,2) {d};
+                \node at (1,1) {e};
+                \node at (1,0) {f};
+            \end{scope}
+            \\
+            \demogrid{3}
+            \begin{scope}[xshift=12,yshift=5]
+                \node[anchor=east,yshift=3] at (-1,1) { 7. \nop };
+                \node at (0,2) {b};
+                \node at (0,1) {c};
+                \node at (1,2) {d};
+                \node at (1,1) {e};
+                \node at (2,2) {f};
+            \end{scope}
+            \\
+        };
+    \end{tikzpicture}
+    \caption{Beispielablauf der 3-Band-Queue. Die ersten vier Schritte sind äquivalent zum Verhalten des 3-Band-Stacks.}
+\end{figure}
+
+Da das Verhalten der ersten zwei Bänder mit dem des 3-Band-Stacks übereinstimmt, lässt sich für diese leicht eine Teilüberführungsfunktion
+\[ \delta_\dequeue \in \Delta_{(\Sigma \cup \{\epsilon\})^2} \]
+angeben, indem man die Überführungsfunktion des 3-Band-Stacks auf zwei Bänder einschränkt.  Die Bewegung nach rechts des dritten Bandes $\delta_\enqueue \in \Delta_{(\Sigma \cup \{\epsilon\})}$ ist ebenfalls trivial:
+\[ \delta_\enqueue(l,q,r) := l \]
+Um die beiden Teilüberführungsfunktionen zusammenzufügen, bietet sich eine Faltungsfunktion der folgenden Art an:
+\begin{align*}
+    \zip : \Delta_{Q_1} \times \Delta_{Q_2} &\rightarrow \Delta_{Q_1 \times Q_2} \\
+    \zip(\delta_1, \delta_2)(\vet{l_1}{l_2},\vet{q_1}{q_2},\vet{r_1}{r_2}) &:= \vet{\delta_1(l_1,q_1,r_1)}{\delta_2(l_2,q_2,r_2)}
+\end{align*}
+Es fehlt nur noch die Interaktion der zwei Teile:
+\[ \delta_\shiftUp \in \Delta_{(\Sigma \cup \{\epsilon\})^3} \]
+\begin{align*}
+    \delta_\shiftUp(l,\ve{\epsilon}{\epsilon}{q_3},r) &:= \ve{q_3}{\epsilon}{\epsilon} \\
+    \delta_\shiftUp(l,\ve{q_1}{\epsilon}{q_3},\ve{\epsilon}{\epsilon}{\epsilon}) &:= \ve{q_1}{q_3}{\epsilon} \text{ für } q_1 \in \Sigma
+\end{align*}
+Damit setzt sich die Gesamtüberführungsfunktion zusammen als
+\[ \delta := \delta_\shiftUp \circ \zip(\delta_\dequeue,\delta_\enqueue) \]
+\begin{figure}[h]
+    \centering
+    \begin{tikzpicture}[scale=0.4,every node/.style={anchor=base}]
+        \begin{scope}
+            \clip (-0.1,-0.1) rectangle (4.5,3.1);
+            \draw[color=gray] (1) (0,0) grid (5,3);
+        \end{scope}
+        \draw[->,>=stealth,thick] (3.5,2.5) -- (2.5,1.5) -- (2.5,2.5) -- (1.5,1.5) -- (1.5,2.5) -- node[above=0.2] { \dequeue } (0.5,1.5) -- (0.5,2.5) -- (-0.5,1.5);
+        \draw[->,>=stealth,thick] (-0.5,0.5) -- node[below=0.1] { \enqueue } (3.3,0.5);
+        \draw[->,>=stealth,thick] (3.5,0.5) -- node[below=0.2,sloped] { \shiftUp } (3.5,2.3);
+    \end{tikzpicture}
+    \caption{Schematische Darstellung der Teilübergangsfunktion der 3-Band-Queue}
+\end{figure}
 
 \section{Beweis}
 
 Ziel dieses Abschnittes ist es zu beweisen, dass Kutribs 3-Band-Stack ohne Zeitverlust tatsächlich einen minimale Zahl von Bändern besitzt. Dazu braucht es aber zu allererst eine allgemeinere Definition von \emph{Bändern}:
 \begin{definition}
-    Wir nennen eine Familie von Zellularautomaten $\ca_\Sigma$ \emph{$k$-Band-Automaten}, falls für die jeweilige Zustandsmenge $Q_\Sigma$ gilt:
+    Wir nennen eine über ein Alphabet $\Sigma$ parametrisierte Familie von Stacks $\ca_\Sigma$ \emph{$k$-Band-Stacks}, falls für die jeweilige Zustandsmenge $Q_\Sigma$ gilt:
     \begin{equation}
         \abs{Q_\Sigma} \in \mathcal{O}(\abs{\Sigma}^k) \label{def:ntape}
     \end{equation}
@@ -393,7 +526,7 @@ Die tatsächliche Form der Zustandsmenge des Automaten kann beliebig weit von $k
 
 \begin{satz}
     \label{thm:tape-hom}
-    Jeder $k$-Band-Automat lässt sich in einen Automaten mit der Zustandsmenge $\zrange{\ceil\alpha} \times \Sigma^k$ überführen, der an seinen Operationen gemessen gleich arbeitet. Dabei ist $\alpha$ die Konstante aus dem $\mathcal{O}$-Kalkül in \eqref{def:ntape}.
+    Jeder $k$-Band-Stack lässt sich in einen Stack mit der Zustandsmenge $\zrange{\ceil\alpha} \times \Sigma^k$ überführen, der an seinen Operationen gemessen gleich arbeitet. Dabei ist $\alpha$ die Konstante aus dem $\mathcal{O}$-Kalkül in \eqref{def:ntape}.
 
     \begin{beweis}
         Die Aussage folgt wegen $\abs{Q_\Sigma} \leq \alpha \abs{\Sigma}^k \leq \ceil\alpha \abs{\Sigma}^k$ aus Mächtigkeitsargumenten.
@@ -403,33 +536,32 @@ Die tatsächliche Form der Zustandsmenge des Automaten kann beliebig weit von $k
 Dieser Satz sagt allerdings nichts aus über die tatsächliche Speicherung der Inhalte im Zellraum, insbesondere muss ein gepushtes Zeichen $a \in \Sigma$ nicht in dieser Form überhaupt auf einem Band stehen. Wir greifen deswegen auf $\Gamma$ zurück und erweitern es:
 
 \begin{definition}
-    Für eine zelluläre Datenstruktur definieren wir den Inhalt der ersten $n$ Zellen als
+    Für einen Stack definieren wir den Inhalt der ersten $n$ Zellen als
     \[ \Gamma(c,n) := \Gamma(c) \big|_m \]
     wobei $\Gamma(c) \big|_m$ den Präfix von $\Gamma(c)$ der Länge $m$ bezeichnet und $m$ definiert ist als
     \[ m := \max \{m' \in \N \mid \Gamma(c) \big|_{m'} = \Gamma(c') \big|_{m'} \;\forall c' \text{ valide Konfiguration}, c' \big|_n = c \big|_n \} \]
     also $\Gamma(c,n)$ längster gemeinsamer Inhaltspräfix aller Konfigurationen mit den gleichen ersten $n$ Zellen ist oder anders gesagt der Inhalt, der von allen Zellen $> n$ unabhängig ist.
-
-    Für Automaten mit Zustandsmenge $\Sigma^k$ ist dies normalerweise die Konkatenation des Inhalts der ersten $n$ Zellen.
+    Für Stacks mit Zustandsmenge $\Sigma^k$ ist dies normalerweise die Konkatenation des Inhalts der ersten $n$ Zellen.
 \end{definition}
 
 \begin{satz}
     \label{thm:locontent}
-    Nach Pushen von $2n-3$ Zeichen gibt es einen Zeitpunkt $t_0$, sodass $\abs{\Gamma(c,n)} \geq 2n-3$.
+    Nach Pushen von $2n-1$ Zeichen gibt es einen Zeitpunkt $t_0$, sodass $\abs{\Gamma(c,n)} \geq 2n-1$.
     \begin{beweis}
-        Welchen Präfix von $\Gamma(c)$ kann eine Konfiguration $c'$ mit $c' \big|_n = c \big|_n$ verändern? Das Signal des ersten Pops erreicht $c'(n+1) \neq c(n+1)$ zum Zeitpunkt $t_0+n$. Damit könnte $c'^{t_0+n-1+n-2}(2)$ beeinflusst werden, also die $2n-3$-te Pop-Operation.
+        Welchen Präfix von $\Gamma(c)$ kann eine Konfiguration $c'$ mit $c' \big|_n = c \big|_n$ verändern? Das Signal des ersten Pops erreicht $c'(n+1) \neq c(n+1)$ zum Zeitpunkt $t_0+n$. Damit könnte $c'^{t_0+n+(n-1)}(1)$ beeinflusst werden, also die $2n-1$-te Pop-Operation. Oder so.
     \end{beweis}
 \end{satz}
 
 \begin{satz}
     \label{cor:spacesize}
-    Für $k$-Band-Automaten gibt es für alle $n \in \N, l > kn$ ein Alphabet $\Sigma$ und ein Wort $w \in \Sigma^l$, nach dessen Pushen gilt:
+    Für $k$-Band-Stacks gibt es für alle $n \in \N$ ein Alphabet $\Sigma$ und ein Wort $w \in \Sigma^{kn+1}$, nach dessen Pushen auf einen leeren Stack gilt:
     \[ \abs{\Gamma(c,n)} \leq kn \]
     \begin{beweis}
-        Angenommen, es gälte für ein $n$ und $l$ und alle Alphabete $\Sigma$ und Konfigurationen $c$ $\abs{\Gamma(c,n)} > kn$, also $\abs{\bild{\Gamma(\cdot,n)}} \geq \abs{\Sigma}^{kn+1}$.
+        Angenommen, es gälte für ein $n$ und alle Alphabete $\Sigma$ und Konfigurationen $c$ $\abs{\Gamma(c,n)} > kn$, also $\Gamma(c,n) = \Gamma(c)$ und damit $\abs{\bild{\Gamma(\cdot,n)}} \geq \abs{\Sigma}^{kn+1}$.
         Es folgt
-        \[ \abs\Sigma^{kn+1} < \abs{\bild{\Gamma(\cdot,n)}} \leq \abs{Q^n} \leq (\ceil{c}\abs{\Sigma}^k)^n = \abs{\Sigma}^{kn} \ceil{c}^n \]
+        \[ \abs\Sigma^{kn+1} \leq \abs{\bild{\Gamma(\cdot,n)}} \leq \abs{Q^n} \leq (\ceil{\alpha}\abs{\Sigma}^k)^n = \abs{\Sigma}^{kn} \ceil{\alpha}^n \]
         also
-        \[ kn + 1 \leq kn + n \log_{\abs\Sigma}(\ceil{c}) \]
+        \[ kn + 1 \leq kn + n \log_{\abs\Sigma}(\ceil{\alpha}) \]
         Für $\abs{\Sigma}$ groß genug ergibt sich der Widerspruch.
     \end{beweis}
 \end{satz}
@@ -437,14 +569,16 @@ Dieser Satz sagt allerdings nichts aus über die tatsächliche Speicherung der I
 \begin{satz}
     Es gibt keinen 2-Band-Automaton mit \pop-Operation ohne Zeitverlust.
     \begin{beweis}
-        Wähle $w \in \Sigma^{2n+1}$ nach \thref{cor:spacesize}. Nach Pushen von $w \big|_{2n-3}$ gibt es nach \thref{thm:locontent} $t_0$, sodass $\abs{\Gamma(c,n)} \geq 2n-3$. Pushe dann die letzten vier Buchstaben und es gilt, da $c(n+1)$ nicht beeinflusst worden sein kann, $\abs{\Gamma(c,n)} \geq 2n+1$, im Widerspruch zu \thref{cor:spacesize}.
+        Wähle $w \in \Sigma^{2n+1}$ nach \thref{cor:spacesize}. Nach Pushen von $w \big|_{2n-1}$ gibt es nach \thref{thm:locontent} $t_0$, sodass $\abs{\Gamma(c,n)} \geq 2n-1$. Pushe dann die letzten zwei Buchstaben und es gilt, da $c(n+1)$ nicht beeinflusst worden sein kann, $\abs{\Gamma(c,n)} \geq 2n+1$, im Widerspruch zu \thref{cor:spacesize}.
     \end{beweis}
 \end{satz}
 
+\newpage
 \begin{thebibliography}{9}
-
-    \bibitem{kutrib08}
+        \bibitem{kutrib08}
         M. Kutrib: \emph{Cellular Automata – A Computational Point of View}, Studies in Computational Intelligence (SCI) 113, 183–227 (2008)
 
+        \bibitem{hughes00}
+        Koen Claessen, John Hughes: \emph{QuickCheck: a lightweight tool for random testing of Haskell programs}, ICFP 2000, 268-279
 \end{thebibliography}
 \end{document}
